@@ -22,7 +22,7 @@ class Daemon:
 			port = dev_path[-1] # The port the USB is connected to
 			if not hub[:3] == "usb": # Not the root connection of the USB
 				continue
-			path = hub + "/" + port
+			path = hub + "/" + port + "/"
 
 			# If the USB was inserted into the computer
 			if insertion:
@@ -49,6 +49,7 @@ class Authenticator:
 	def __init__(self, path):
 		global DEV_PATH
 		DEV_PATH = SYS_PATH + path
+		CREDENTIALS.deauthenticate_device()
 
 	# Check if the directory provided actually exists
 	def existence_of_directory(self):
@@ -59,15 +60,28 @@ class Authenticator:
 		password_bytes = Authenticator.prompt_for_password(self)
 		if CREDENTIALS.verify(password_bytes):
 			print("Authentication success.")
+			CREDENTIALS.authenticate_device()
 		else:
 			print("Authentication failed, wrong password.")
+
+	# Authenticates the device on the system
+	def authenticate_device(self):
+		with open(DEV_PATH, "wb") as file:
+			file.write(b"1")
+			file.close()
+
+	# Deauthenticates the device on the system
+	def deauthenticate_device(self):
+		with open(DEV_PATH, "wb") as file:
+			file.write(b"0")
+			file.close()
 
 	# Prompts for a password and returns it as bytes
 	def prompt_for_password(self):
 		print("Please enter your USB authentication password.")
 		return input().encode("UTF-8")
 		
-# Handles password verification and setting
+# Handles password verification
 class CredentialsManager:
 	global USBAUTH_PATH
 	global PASSWORD_FILENAME
@@ -83,19 +97,17 @@ class CredentialsManager:
 	# Returns true if, and only if the main directory, and if set, and the sub file exists
 	def ensure_usbauth_path(self, sub_file=None):
 		if os.path.isdir(USBAUTH_PATH):
-			print("Dir")
 			if sub_file is not None:
 				sub_file_full_path = USBAUTH_PATH + sub_file
 				if not os.path.isfile(sub_file_full_path):
-					print("No file")
 					open(sub_file_full_path, "wb").close()	
 					return False
-				print("File")
 			return True
 		else:
-			print("nothing")
+			print("Creating the directory", USBAUTH_PATH, "...")
 			os.makedirs(USBAUTH_PATH)
 			if sub_file is not None:
+				print("Creating the file", sub_file, "...")
 				open(USBAUTH_PATH + sub_file, "wb").close()
 			return False
 
