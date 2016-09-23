@@ -1,6 +1,5 @@
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
-import os
 from easygui import *
 
 class Password:
@@ -10,6 +9,7 @@ class Password:
 	# Returns true if passwords match, false is they do not, or if the operation was canceled
 	def verify_gui(self, desc):
 		clear_verify = PasswordGUI().verify("Please enter your USB authentication password.\nDevice pending for authentication:\n" + desc)
+		print("Verification GUI done")
 		if clear_verify is not None:
 			return self.verify(clear_verify.encode("UTF-8"))
 		else: return False
@@ -72,6 +72,7 @@ class PasswordGUI:
 
 	# Creates a password verification window, return cleartext password or none if window was canceled
 	def verify(self, message):
+		print("Creating GUI")
 		try:
 			return multpasswordbox(message, "Authenticate USB device", ["Password"])[0]
 		except: return None
