@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# This is the installation script of USBAuthentication
+# This is the installation script of USBAuth
 # Author: Oliver Stochholm Neven
 # Email: oliver@neven.dk
 # Created on: 22. September 2016
