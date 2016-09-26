@@ -37,7 +37,6 @@ class Authenticator:
 
 	# Starts the authentication process for the device
 	def authenticate(self):
-		print("opening gui")
 		if PASSWORD.verify_gui(DEV_PATH):
 			print("Authentication success.")
 			self.authenticate_device()
@@ -51,6 +50,9 @@ class Authenticator:
 				file.write(b"1")
 				file.close()
 				return True
+		except PermissionError:
+			print("No permissions, please run daemon as root!")
+			exit()
 		except:
 			print(DEV_PATH, "was not found")
 			return False
@@ -62,6 +64,9 @@ class Authenticator:
 				file.write(b"0")
 				file.close()
 				return True
+		except PermissionError:
+			print("No permissions, please run daemon as root!")
+			exit()
 		except:
 			print(DEV_PATH, "was not found")
 			return False

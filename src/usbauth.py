@@ -33,7 +33,7 @@ Usage:
 Dependencies:
 	python (>= 3.5.1)
 	cryptography (>= v1.2.3)
-	easygui (>= 0.96)
+	pyqt5 (>= 5.5.1)
 	pyudev (>= 0.16.1)
 
 '''
@@ -83,10 +83,8 @@ class Launcher:
 	def uninstall(self):
 		pass
 
-
-
-
-
-
-launcher = Launcher()
-launcher.launch()
+try:
+	launcher = Launcher()
+	launcher.launch()
+except KeyboardInterrupt:
+	print("Exiting ...")

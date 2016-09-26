@@ -19,11 +19,12 @@
     For any further information contact me at oliver@neven.dk
 
 '''
-
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
-from easygui import *
+import sys
+from PyQt5.QtWidgets import QMessageBox, QApplication, QWidget, QInputDialog, QLineEdit
 
+# Handle password updating and verification on the system part
 class Password:
 
 	# Verifies a password entered through the GUI with the one saved on disk
@@ -86,26 +87,62 @@ class Password:
 			PasswordGUI().error("Root permissions required to change USB authentication password!")
 			return False
 
+# Handle GUI pass through of information to system password updating and verification
 class PasswordGUI:
 
 	# Creates an error window
 	def error(self, message):
-		msgbox("ERROR: " + message, "USB authentication error")
+		a = QApplication(sys.argv)
+		QMessageBox.warning(QWidget(), "ERROR", message, QMessageBox.Ok)
 
 	# Creates a password verification window, return cleartext password or none if window was canceled
 	def verify(self, message):
-		print("Creating GUI")
-		try:
-			return multpasswordbox(message, "Authenticate USB device", ["Password"])[0]
-		except: return None
+		a = QApplication(sys.argv)
+		q = QInputDialog()
+		q.setWindowTitle("USB Authentication")
+		q.setLabelText("Provide your USB authentication password for this device:\n" + message)
+		q.setTextEchoMode(QLineEdit.Password)
+		q.show()
+		a.exec()
+		t = q.textValue()
+		if t == "": t = False
+		return t
 
 	# Creates a password update field, returns the cleartext password or none if window was canceled
 	def update(self):
-		title = "Update USB authentication password"
 		clear_verify = clear_password = None
-		try:
-			while clear_password is None or clear_password != clear_verify:
-				clear_password = multpasswordbox("Please enter a new USB authentication password.", title, ["New password"])[0]
-				clear_verify = multpasswordbox("Please verify your new password.", title, ["Verify password"])[0]
-			return clear_password
-		except: return None
+		a = QApplication(sys.argv)
+		q = QInputDialog()
+		while clear_password is None or clear_password != clear_verify:
+			q.setWindowTitle("USB Authentication Update")
+			q.setLabelText("Provide a new USB authentication password.")
+			q.show()
+			a.exec()
+			clear_password = q.textValue()
+			q = QInputDialog()
+			q.setWindowTitle("USB Authentication Update")
+			q.setLabelText("Verify your new USB authentication password.")
+			q.show()
+			clear_verify = q.textValue()
+			a.exec()
+		#clear_password = easygui.multpasswordbox("Please enter a new USB authentication password.", title, ["New password"])[0]
+		#clear_verify = easygui.multpasswordbox("Please verify your new password.", title, ["Verify password"])[0]
+		return clear_password
+
+	# Extract data from two line inputs if they are not none
+	# Also if both line inputs are given, the text value is only returned if they are equal
+	def extract_input(self, password=None, verify=None):
+		if verify is not None:
+			if password is not None:
+				if password.text() == verify.text(): return password.text()
+				else: return False
+			else: return verify.text()
+
+
+
+
+
+pg = PasswordGUI()
+#pg.error("Test")
+#print(":", pg.verify("Test"), ":")
+print(":", pg.update(), ":")
