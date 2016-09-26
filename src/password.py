@@ -31,9 +31,8 @@ class Password:
 	# Give a description of the device to authenticate
 	# Returns true if passwords match, false is they do not, or if the operation was canceled
 	def verify_gui(self, desc):
-		clear_verify = PasswordGUI().verify("Please enter your USB authentication password.\nDevice pending for authentication:\n" + desc)
-		print("Verification GUI done")
-		if clear_verify is not None:
+		clear_verify = PasswordGUI().verify(desc)
+		if clear_verify is not False:
 			return self.verify(clear_verify.encode("UTF-8"))
 		else: return False
 
@@ -62,7 +61,7 @@ class Password:
 	# NOTE: This function calls update() which requires root!
 	def update_gui(self):
 		clear_password = PasswordGUI().update()
-		if clear_password is not None:
+		if clear_password is not False:
 			return self.update(clear_password.encode("UTF-8"))
 		else: return False
 
@@ -100,7 +99,7 @@ class PasswordGUI:
 		a = QApplication(sys.argv)
 		q = QInputDialog()
 		q.setWindowTitle("USB Authentication")
-		q.setLabelText("Provide your USB authentication password for this device:\n" + message)
+		q.setLabelText("Provide your USB authentication password.\nDevice pending for authentication:\n" + message)
 		q.setTextEchoMode(QLineEdit.Password)
 		q.show()
 		a.exec()
@@ -112,21 +111,22 @@ class PasswordGUI:
 	def update(self):
 		clear_verify = clear_password = None
 		a = QApplication(sys.argv)
-		q = QInputDialog()
 		while clear_password is None or clear_password != clear_verify:
-			q.setWindowTitle("USB Authentication Update")
-			q.setLabelText("Provide a new USB authentication password.")
-			q.show()
+			q0 = QInputDialog()
+			q0.setWindowTitle("USB Authentication Update")
+			q0.setLabelText("Provide a new USB authentication password.")
+			q0.setTextEchoMode(QLineEdit.Password)
+			q0.show()
 			a.exec()
-			clear_password = q.textValue()
-			q = QInputDialog()
-			q.setWindowTitle("USB Authentication Update")
-			q.setLabelText("Verify your new USB authentication password.")
-			q.show()
-			clear_verify = q.textValue()
+			clear_password = q0.textValue()
+			q1 = QInputDialog()
+			q1.setWindowTitle("USB Authentication Update")
+			q1.setLabelText("Verify your new USB authentication password.")
+			q1.setTextEchoMode(QLineEdit.Password)
+			q1.show()
 			a.exec()
-		#clear_password = easygui.multpasswordbox("Please enter a new USB authentication password.", title, ["New password"])[0]
-		#clear_verify = easygui.multpasswordbox("Please verify your new password.", title, ["Verify password"])[0]
+			clear_verify = q1.textValue()
+		if clear_password is "": clear_password = False
 		return clear_password
 
 	# Extract data from two line inputs if they are not none
@@ -137,12 +137,3 @@ class PasswordGUI:
 				if password.text() == verify.text(): return password.text()
 				else: return False
 			else: return verify.text()
-
-
-
-
-
-pg = PasswordGUI()
-#pg.error("Test")
-#print(":", pg.verify("Test"), ":")
-print(":", pg.update(), ":")

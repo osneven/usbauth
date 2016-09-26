@@ -42,24 +42,11 @@ do
     RESULT=$(python3 -c "from password import *;p = Password();print(p.update_gui())")
 done
 
-# Prompt for automatic startup of the daemon of login
-# Removal command:
-#   grep -v "/etc/usbauth/usbauth start" "$HOME/.profile" > /tmp/usbauthrm && mv /tmp/usbauthrm "$HOME/.profile"
-while true; do
-    read -p "Do you wish to let the daemon automatically start on login? [Y/n] "
-    case $yn in
-        [Yy]* ) echo "[+] Adding rule to $HOME/.profile ..."; echo "/etc/usbauth/usbauth start" >> "$HOME/.profile"; break;;
-        [Nn]* ) break;;
-        * ) echo "Please answer yes or no.";;
-    esac
-done
-
 # Installation complete
 echo "[+] Installation completed!"
 
-# Debug information
-#echo "$INSTALL_PATH contents:"
-#ls -la "$INSTALL_PATH"
+# Instructions
+echo "For help run /etc/usbauth/usbauth --help"
 
 
 

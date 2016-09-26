@@ -26,11 +26,12 @@ from password import Password
 # Handles authentication of USB devices
 class Authenticator:
 
-	def __init__(self, path):
-		global DEV_PATH, SYS_PATH, PASSWORD
+	def __init__(self, path, logger):
+		global DEV_PATH, SYS_PATH, PASSWORD, LOGGER
 		SYS_PATH = "/sys/bus/usb/devices/"
 		DEV_PATH = SYS_PATH + path
 		PASSWORD = Password()
+		LOGGER = logger
 		result = self.deauthenticate_device()
 		if not result:
 			return
@@ -38,10 +39,10 @@ class Authenticator:
 	# Starts the authentication process for the device
 	def authenticate(self):
 		if PASSWORD.verify_gui(DEV_PATH):
-			print("Authentication success.")
+			LOGGER.log("Authentication success on " + DEV_PATH)
 			self.authenticate_device()
 		else:
-			print("Authentication failed, wrong password or action was canceled.")
+			LOGGER.log("Authentication attempt failed on " + DEV_PATH)
 
 	# Authenticates the device on the system
 	def authenticate_device(self):
@@ -51,10 +52,10 @@ class Authenticator:
 				file.close()
 				return True
 		except PermissionError:
-			print("No permissions, please run daemon as root!")
+			LOGGER.log("No permissions, please run daemon as root!")
 			exit()
 		except:
-			print(DEV_PATH, "was not found")
+			LOGGER.log(DEV_PATH, "was not found")
 			return False
 
 	# De authenticates the device on the system
@@ -65,10 +66,10 @@ class Authenticator:
 				file.close()
 				return True
 		except PermissionError:
-			print("No permissions, please run daemon as root!")
+			LOGGER.log("No permissions, please run daemon as root!")
 			exit()
 		except:
-			print(DEV_PATH, "was not found")
+			LOGGER.log(DEV_PATH + " was not found")
 			return False
 
 	# Check if the directory provided actually exists

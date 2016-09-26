@@ -20,12 +20,17 @@
 
 '''
 
-import pyudev
+import pyudev, sys
 from authenticator import Authenticator
+from logger import Logger
 from threading import Thread
 
 # The actual daemon program
 class Daemon:
+	def __init__(self, quiet):
+		global LOGGER
+		LOGGER = Logger(quiet)
+		LOGGER.open_logfile()
 
 	# Starts listening
 	def start(self):
@@ -33,12 +38,18 @@ class Daemon:
 		mon = pyudev.Monitor.from_netlink(ctx)
 		mon.start()
 
-		print("Listening for USB devices ...")
+		LOGGER.log("Listening for USB devices ...")
 		connected_paths = []
-		for device in iter(mon.poll, None):
-			thread = Thread(target=Daemon.connection, args=[self, device, connected_paths])
-			thread.daemon = False
-			thread.start()
+
+		try:
+			for device in iter(mon.poll, None):
+				thread = Thread(target=Daemon.connection, args=[self, device, connected_paths])
+				thread.daemon = False
+				thread.start()
+		except KeyboardInterrupt:
+			LOGGER.log("Exited by user")
+			LOGGER.close_logfile()
+			sys.exit(1)
 
 	# Called as a new thread with the device connection
 	def connection(self, device, connected_paths):
@@ -52,17 +63,17 @@ class Daemon:
 
 		# If the USB was inserted into the computer
 		if insertion:
-			print("Connection at", path)
+			LOGGER.log("Connection at " + path)
 			connected_paths.append(path)
-			auth = Authenticator(path)
+			auth = Authenticator(path, LOGGER)
 			if auth.existence_of_directory():
-				print("Device path found")
+				LOGGER.log("Device path found")
 				auth.authenticate()
 			else:
-				print("Device path not found")
+				LOGGER.log("Device path not found")
 
 		# If the USB was removed from the computer
 		else:
-			print("Removal at", path)
+			LOGGER.log("Removal at " + path)
 			if path in connected_paths:
 				connected_paths.remove(path)

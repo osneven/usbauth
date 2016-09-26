@@ -19,16 +19,8 @@
 
     For any further information contact me at oliver@neven.dk
 
-Usage:
-	--start 			- starts the daemon
-	--start-login 	- writes a rule to ~/.profile so that it starts on login
-
-	--stop			- stops the daemon
-	--stop-login		- removes the rule from ~/.profile
-
-	--update-pass		- changes the USB authentication password. Requires root!
-
-	--uninstall		- uninstalls the program from the computer
+Usage (after install):
+	/etc/usbauth/usbauth --help
 
 Dependencies:
 	python (>= 3.5.1)
@@ -83,8 +75,5 @@ class Launcher:
 	def uninstall(self):
 		pass
 
-try:
-	launcher = Launcher()
-	launcher.launch()
-except KeyboardInterrupt:
-	print("Exiting ...")
+launcher = Launcher()
+launcher.launch()
