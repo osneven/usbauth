@@ -18,4 +18,4 @@ A USB device authentcation tool. When a USB device is plugged into the computer,
 For complete help and usage, run: `/etc/usbauth/usbauth --help`
 
 ## License
-The complete project is covered and protected by the GNU GENERAL PUBLIC LICENSE, version 3, 29 June 2007 (GPL-3.0).
+The complete project is licensed under the GNU GENERAL PUBLIC LICENSE version 3(GPL-3.0).
