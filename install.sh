@@ -32,6 +32,7 @@ fi
 echo "[+] Copying source files ..."
 mkdir "$INSTALL_PATH"
 cp -rv ./src/* "$INSTALL_PATH"
+cp -v ./README.md ./LICENSE.txt "$INSTALL_PATH"
 cd "$INSTALL_PATH"
 
 # Update the USB authentication password through the GUI
