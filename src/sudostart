@@ -1,0 +1,1 @@
+gksudo -S "/bin/bash -c '/etc/usbauth/usbauth --start &'"
