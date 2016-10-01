@@ -1,1 +1,2 @@
-gksudo -S "/bin/bash -c '/etc/usbauth/usbauth --start &'"
+#!/usr/bin/env bash
+gksudo -S "/bin/bash -c '/etc/usbauth/usbauth --start"

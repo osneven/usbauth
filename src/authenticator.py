@@ -22,14 +22,14 @@
 
 import os.path
 from password import Password
+from paths import UNIX_PATHS
 
 # Handles authentication of USB devices
 class Authenticator:
 
 	def __init__(self, path, logger):
-		global DEV_PATH, SYS_PATH, PASSWORD, LOGGER
-		SYS_PATH = "/sys/bus/usb/devices/"
-		DEV_PATH = SYS_PATH + path
+		global DEV_PATH, PASSWORD, LOGGER
+		DEV_PATH = UNIX_PATHS.get_usb_bus_path() + path
 		PASSWORD = Password()
 		LOGGER = logger
 		result = self.deauthenticate_device()

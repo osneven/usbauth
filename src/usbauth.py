@@ -32,6 +32,7 @@ Dependencies:
 
 import argparse
 from daemon import Daemon
+from paths import UNIX_PATHS
 
 NAME = "USBAuth"
 VERSION = 1.0
@@ -44,9 +45,7 @@ class Launcher:
 	def argument_parser(self):
 		parser = argparse.ArgumentParser(description=NAME + " (" + str(VERSION) + ") : " + DESCRIPTION)
 		parser.add_argument("--start", help="starts the daemon", action="store_true")
-		parser.add_argument("--start-login", help="writes a rule to ~/.profile so that it starts on login", action="store_true")
 		parser.add_argument("--stop", help="stops the daemon", action="store_true")
-		parser.add_argument("--stop-login", help="removes the rule from ~/.profile", action="store_true")
 		parser.add_argument("--update-pass", help="changes the USB authentication password. Requires root privileges!", action="store_true")
 		parser.add_argument("--uninstall", help="uninstalls the program from the computer", action="store_true")
 		return parser.parse_args()
@@ -55,25 +54,46 @@ class Launcher:
 	def launch(self):
 		args = self.argument_parser()
 		if args.start: self.start()
-		elif args.start_login: self.start_login()
 		elif args.stop: self.stop()
-		elif args.start_login: self.stop_login()
 		elif args.update_pass: self.update_pass()
 		elif args.uninstall: self.uninstall()
 
+	# Starts the daemon
 	def start(self):
+		self.write_pid_file()
 		d = Daemon()
 		d.start()
-	def start_login(self):
-		pass
+
+	# Stops the daemon
 	def stop(self):
-		pass
-	def stop_login(self):
-		pass
+		from os import kill
+		from signal import SIGTERM
+		PID = self.read_pid_file()
+		kill(int(PID), SIGTERM)
+
+	# Updates the password
 	def update_pass(self):
-		pass
+		from password import Password
+		Password.update_gui()
+
+	# Uninstalls the program
 	def uninstall(self):
 		pass
+
+	# Writes the this process PID to a PID file
+	def write_pid_file(self):
+		from os import getpid
+		PID = getpid()
+		with open(UNIX_PATHS.get_pid_file_path(), "wb") as f:
+			f.write(str(PID).encode("UTF-8"))
+			f.close()
+
+	# Reads and returns the PID stored in the PID file
+	def read_pid_file(self):
+		with open(UNIX_PATHS.get_pid_file_path(), "rb") as f:
+			PID = f.read().decode("UTF-8")
+			f.close()
+		return PID
 
 launcher = Launcher()
 launcher.launch()

@@ -28,12 +28,16 @@ if [ -d "$INSTALL_PATH" ]; then
 	done
 fi
 
-# Make, copy source files and change into the install directory
+# Move files
 echo "[+] Copying source files ..."
 mkdir "$INSTALL_PATH"
 cp -rv ./src/* "$INSTALL_PATH"
 cp -v ./README.md ./LICENSE.txt "$INSTALL_PATH"
 cd "$INSTALL_PATH"
+
+# Make the launch files executable
+chmod 755 "usbauth"
+chmod 755 "sudostart"
 
 # Update the USB authentication password through the GUI
 echo "[+] Setting password ..."
@@ -48,23 +52,3 @@ echo "[+] Installation completed!"
 
 # Instructions
 echo "For help run /etc/usbauth/usbauth --help"
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

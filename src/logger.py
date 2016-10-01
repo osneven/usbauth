@@ -19,21 +19,18 @@
     For any further information contact me at oliver@neven.dk
 
 '''
+from paths import UNIX_PATHS
 
 # Handles log creation and prints to the screen
 class Logger:
-	# If quiet is true, no information is printed to stdout, only to log files
-	def __init__(self):
-		global LOG_DIRECTORY
-		LOG_DIRECTORY = "/etc/usbauth/logs/"
 
 	# Open a logfile for entries
 	def open_logfile(self):
 		from os import makedirs
 		from os.path import isdir
 		global LOG_FILE
-		if not isdir(LOG_DIRECTORY): makedirs(LOG_DIRECTORY)
-		pathname = LOG_DIRECTORY + "USBAUTH-" + self.get_time_string() + ".log"
+		if not isdir(UNIX_PATHS.get_log_dir_path()): makedirs(UNIX_PATHS.get_log_dir_path())
+		pathname = UNIX_PATHS.get_log_dir_path() + "USBAUTH-" + self.get_time_string() + ".log"
 		LOG_FILE = open(pathname, "wb")
 		self.log("### START OF LOG ###")
 

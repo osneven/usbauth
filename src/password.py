@@ -21,8 +21,9 @@
 '''
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
-import sys
+from sys import argv
 from PyQt5.QtWidgets import QMessageBox, QApplication, QWidget, QInputDialog, QLineEdit
+from paths import UNIX_PATHS
 
 # Handle password updating and verification on the system part
 class Password:
@@ -47,7 +48,7 @@ class Password:
 		# Read the SHA512 of the password saved on the disk
 		cipher_password = None
 		try:
-			with open("/etc/usbauth/passwd", "rb") as file:
+			with open(UNIX_PATHS.get_password_file_path(), "rb") as file:
 				cipher_password = file.read()
 				file.close()
 		except FileNotFoundError:
@@ -78,7 +79,7 @@ class Password:
 		# Write the SHA512 of the password to the disk
 		# NOTE: This operation requires root permissions
 		try:
-			with open("/etc/usbauth/passwd", "wb") as file:
+			with open(UNIX_PATHS.get_password_file_path(), "wb") as file:
 				file.write(cipher_password)
 				file.close()
 				return True
@@ -96,7 +97,7 @@ class PasswordGUI:
 
 	# Creates a password verification window, return cleartext password or none if window was canceled
 	def verify(self, message):
-		a = QApplication(sys.argv)
+		a = QApplication(argv)
 		q = QInputDialog()
 		q.setWindowTitle("USB Authentication")
 		q.setLabelText("Provide your USB authentication password.\nDevice pending for authentication:\n" + message)
@@ -110,7 +111,7 @@ class PasswordGUI:
 	# Creates a password update field, returns the cleartext password or none if window was canceled
 	def update(self):
 		clear_verify = clear_password = None
-		a = QApplication(sys.argv)
+		a = QApplication(argv)
 		while clear_password is None or clear_password != clear_verify:
 			q0 = QInputDialog()
 			q0.setWindowTitle("USB Authentication Update")
