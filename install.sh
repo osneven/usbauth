@@ -44,7 +44,7 @@ echo "[+] Setting password ..."
 RESULT="False"
 while [ "$RESULT" != "True" ]
 do
-    RESULT=$(python3 -c "from password import *;p = Password();print(p.update_gui())")
+    RESULT=$(python3 -c "from password import update_gui;print(update_gui())")
 done
 
 # Installation complete

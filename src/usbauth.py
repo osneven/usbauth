@@ -32,7 +32,7 @@ Dependencies:
 
 import argparse
 from daemon import Daemon
-from paths import UNIX_PATHS
+from paths import get_pid_file_path, get_install_dir_path
 
 NAME = "USBAuth"
 VERSION = 1.0
@@ -47,7 +47,6 @@ class Launcher:
 		parser.add_argument("--start", help="starts the daemon", action="store_true")
 		parser.add_argument("--stop", help="stops the daemon", action="store_true")
 		parser.add_argument("--update-pass", help="changes the USB authentication password. Requires root privileges!", action="store_true")
-		parser.add_argument("--uninstall", help="uninstalls the program from the computer", action="store_true")
 		return parser.parse_args()
 
 	# Launches the program
@@ -73,24 +72,20 @@ class Launcher:
 
 	# Updates the password
 	def update_pass(self):
-		from password import Password
-		Password.update_gui()
-
-	# Uninstalls the program
-	def uninstall(self):
-		pass
+		from password import update_gui
+		update_gui()
 
 	# Writes the this process PID to a PID file
 	def write_pid_file(self):
 		from os import getpid
 		PID = getpid()
-		with open(UNIX_PATHS.get_pid_file_path(), "wb") as f:
+		with open(get_pid_file_path(), "wb") as f:
 			f.write(str(PID).encode("UTF-8"))
 			f.close()
 
 	# Reads and returns the PID stored in the PID file
 	def read_pid_file(self):
-		with open(UNIX_PATHS.get_pid_file_path(), "rb") as f:
+		with open(get_pid_file_path(), "rb") as f:
 			PID = f.read().decode("UTF-8")
 			f.close()
 		return PID

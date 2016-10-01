@@ -19,19 +19,16 @@
     For any further information contact me at oliver@neven.dk
 
 '''
-
-# The paths used for UNIX like operating systems
-class UNIX_PATHS:
-	def get_install_dir_path(self):
-		return "/etc/usbauth/"
-	def get_password_file_path(self):
-		return self.get_install_dir_path() + "passwd"
-	def get_pid_file_path(self):
-		return self.get_install_dir_path() + "pid"
-	def get_log_dir_path(self):
-		return self.get_install_dir_path() + "log/"
-	def get_usb_bus_path(self):
-		return "/sys/bus/usb/devices/"
+def get_install_dir_path():
+	return "/etc/usbauth/"
+def get_password_file_path():
+	return get_install_dir_path() + "passwd"
+def get_pid_file_path():
+	return get_install_dir_path() + "pid"
+def get_log_dir_path():
+	return get_install_dir_path() + "log/"
+def get_usb_bus_path():
+	return "/sys/bus/usb/devices/"
 
 
 

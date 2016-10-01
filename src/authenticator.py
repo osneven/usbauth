@@ -21,16 +21,15 @@
 '''
 
 import os.path
-from password import Password
-from paths import UNIX_PATHS
+from password import verify_gui
+from paths import get_usb_bus_path
 
 # Handles authentication of USB devices
 class Authenticator:
 
 	def __init__(self, path, logger):
 		global DEV_PATH, PASSWORD, LOGGER
-		DEV_PATH = UNIX_PATHS.get_usb_bus_path() + path
-		PASSWORD = Password()
+		DEV_PATH = get_usb_bus_path() + path
 		LOGGER = logger
 		result = self.deauthenticate_device()
 		if not result:
@@ -38,7 +37,7 @@ class Authenticator:
 
 	# Starts the authentication process for the device
 	def authenticate(self):
-		if PASSWORD.verify_gui(DEV_PATH):
+		if verify_gui(DEV_PATH):
 			LOGGER.log("Authentication success on " + DEV_PATH)
 			self.authenticate_device()
 		else:

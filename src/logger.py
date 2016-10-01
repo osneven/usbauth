@@ -19,7 +19,7 @@
     For any further information contact me at oliver@neven.dk
 
 '''
-from paths import UNIX_PATHS
+from paths import get_log_dir_path
 
 # Handles log creation and prints to the screen
 class Logger:
@@ -29,8 +29,8 @@ class Logger:
 		from os import makedirs
 		from os.path import isdir
 		global LOG_FILE
-		if not isdir(UNIX_PATHS.get_log_dir_path()): makedirs(UNIX_PATHS.get_log_dir_path())
-		pathname = UNIX_PATHS.get_log_dir_path() + "USBAUTH-" + self.get_time_string() + ".log"
+		if not isdir(get_log_dir_path()): makedirs(get_log_dir_path())
+		pathname = get_log_dir_path() + "USBAUTH-" + self.get_time_string() + ".log"
 		LOG_FILE = open(pathname, "wb")
 		self.log("### START OF LOG ###")
 
