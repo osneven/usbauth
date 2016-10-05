@@ -1,29 +1,30 @@
 '''
 
-    USBAuth, a USB device authentication tool.
-    Copyright (C) 2016  Oliver Stochholm Neven
+	USBAuth, a USB device authentication tool.
+	Copyright (C) 2016  Oliver Stochholm Neven
 
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
+	This program is free software: you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation, either version 3 of the License, or
+	(at your option) any later version.
 
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+	This program is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
-    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+	You should have received a copy of the GNU General Public License
+	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-    For any further information contact me at oliver@neven.dk
+	For any further information contact me at oliver@neven.dk
 
 '''
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from sys import argv
 from PyQt5.QtWidgets import QMessageBox, QApplication, QWidget, QInputDialog, QLineEdit
-from paths import get_password_file_path
+from paths import get_password_file_path, get_whitelist_file_path
+import jsonpickle
 
 # Verifies a password entered through the GUI with the one saved on disk
 # Give a description of the device to authenticate
@@ -63,7 +64,6 @@ def update_gui():
 		return update(clear_password.encode("UTF-8"))
 	else: return False
 
-
 # Updates the password saved on disk
 # NOTE: Requires root permissions!
 def update(clear_password_bytes):
@@ -84,6 +84,81 @@ def update(clear_password_bytes):
 		gerror("Root permissions required to change USB authentication password!")
 		return False
 
+# Verifies that the specified USB device is whitelisted
+def whitelist_verify(dev_path):
+
+	# Get the identifying hash of the USB device
+	identifying_hash = whitelist_identify(dev_path)
+
+	# Check that the hash is inside the whitelist file
+	try:
+		with open(get_whitelist_file_path(), "rb") as f:
+			wl = jsonpickle.decode(f.read().decode("UTF-8"))
+			f.close()
+		return identifying_hash in wl
+	except FileNotFoundError or TypeError:
+		with open(get_whitelist_file_path(), "wb") as f:
+			f.write(jsonpickle.encode([]).encode("UTF-8"))
+			f.close()
+
+# Whitelists a USB device if user clicks yes on the GUI
+# NOTE: This function calls whitelist() which requires root!
+def whitelist_update_gui(dev_path):
+	if gwhitelist_update(dev_path):
+		whitelist_update(dev_path)
+		return True
+	return False
+
+# Whitelists a USB device
+# NOTE: Requires root permissions!
+def whitelist_update(dev_path):
+
+		# Get the identifying hash of the USB device
+		identifying_hash = whitelist_identify(dev_path)
+
+		# Add the hash to to the json whitelist file
+		try:
+			# Read all the other whitelist entries
+			with open(get_whitelist_file_path(), "rb") as f:
+				wl = jsonpickle.decode(f.read().decode("UTF-8"))
+				f.close()
+
+			# Write them back to the file in addition to the new entry
+			with open(get_whitelist_file_path(), "wb") as f:
+				wl.append(identifying_hash)
+				f.write(jsonpickle.encode(wl).encode("UTF-8"))
+				f.close()
+		except PermissionError:
+			gerror("Root permissions required to whitelist USB device!")
+
+		# Whitelist file doesn't exist, create it and redo this function
+		except FileNotFoundError:
+			with open(get_whitelist_file_path(), "wb") as f:
+				f.write(jsonpickle.encode([]).encode("UTF-8"))
+				f.close()
+			whitelist(dev_path)
+
+# Returns the identifying hash for a specific USB device
+def whitelist_identify(dev_path):
+	# Initialize SHA512 digest for the identifying data
+	digest = hashes.Hash(hashes.SHA512(), backend=default_backend())
+
+	# Identify the USB device using the following files
+	identifying_files = ["idProduct", "idVendor", "manufacturer", "product", "serial"]
+
+	# Read the data from each file
+	for id_file in identifying_files:
+		try:
+			with open(dev_path + id_file, "rb") as f:
+				digest.update(f.read())
+				f.close()
+		except:
+			continue
+
+	# Finalize the identifying hash and return it
+	return digest.finalize()
+
+# QT gui pup functions
 # Creates an error window
 def gerror(message):
 	a = QApplication(argv)
@@ -123,3 +198,9 @@ def gupdate():
 		clear_verify = q1.textValue()
 	if clear_password is "": clear_password = False
 	return clear_password
+
+# Creates a whitelist request field, returns true if the users clicks yes, and false if otherwise
+def gwhitelist_update(desc):
+	a = QApplication(argv)
+	result = QMessageBox.question(QWidget(), "Whitelist Device", "Do you wish to whitelist the following USB device?\n" + desc, QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+	return result == QMessageBox.Yes

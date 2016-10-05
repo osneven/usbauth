@@ -1,34 +1,34 @@
 '''
 
-    USBAuth, a USB device authentication tool.
-    Copyright (C) 2016  Oliver Stochholm Neven
+	USBAuth, a USB device authentication tool.
+	Copyright (C) 2016  Oliver Stochholm Neven
 
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
+	This program is free software: you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation, either version 3 of the License, or
+	(at your option) any later version.
 
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+	This program is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
-    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+	You should have received a copy of the GNU General Public License
+	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-    For any further information contact me at oliver@neven.dk
+	For any further information contact me at oliver@neven.dk
 
 '''
 
 import os.path
-from password import verify_gui
+from password import verify_gui, whitelist_update_gui, whitelist_verify
 from paths import get_usb_bus_path
 
 # Handles authentication of USB devices
 class Authenticator:
 
 	def __init__(self, path, logger):
-		global DEV_PATH, PASSWORD, LOGGER
+		global DEV_PATH, PASSWORD, LOGGER, WHITELIST
 		DEV_PATH = get_usb_bus_path() + path
 		LOGGER = logger
 		result = self.deauthenticate_device()
@@ -37,8 +37,13 @@ class Authenticator:
 
 	# Starts the authentication process for the device
 	def authenticate(self):
-		if verify_gui(DEV_PATH):
+		if whitelist_verify(DEV_PATH):
+			LOGGER.log("Whitelisted authentication on " + DEV_PATH)
+			self.authenticate_device()
+		elif verify_gui(DEV_PATH):
 			LOGGER.log("Authentication success on " + DEV_PATH)
+			if whitelist_update_gui(DEV_PATH):
+				LOGGER.log("New whitelist entry on " + DEV_PATH)
 			self.authenticate_device()
 		else:
 			LOGGER.log("Authentication attempt failed on " + DEV_PATH)

@@ -27,8 +27,7 @@ def get_pid_file_path():
 	return get_install_dir_path() + "pid"
 def get_log_dir_path():
 	return get_install_dir_path() + "log/"
+def get_whitelist_file_path():
+	return get_install_dir_path() + "whitelist.json"
 def get_usb_bus_path():
 	return "/sys/bus/usb/devices/"
-
-
-
