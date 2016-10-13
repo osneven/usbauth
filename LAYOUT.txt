@@ -1,0 +1,19 @@
+
+
+
+												|USB device listener|
+
+																|
+																V
+
+												|USB identification|	->  Vendor id+name, product id+name and device system path
+
+																|
+																V
+
+												|Prompt for authentication|
+
+												|													|
+												V													V
+
+								|QT pop up windows|			|Manual terminal entry|
