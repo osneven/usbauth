@@ -59,16 +59,23 @@ class Listener:
 		path = self.connection_device_path(dev)
 		if not path: return
 		insertion = self.connection_type(dev)
-		
-		# If connection is an insertion
-		if insertion:
-			LOGGER.log("Insertion at " + path)
-			device = Device(path)
-			CONNECTED_DEVICES.append(device)
-		# If it was a removal
-		else:
-			LOGGER.log("Removal at " + path)
-			self.remove_device_by_path(path)
+
+		# Check if the connection was an insertion or removal
+		if insertion: self.insertion(path)
+		else: self.removal(path)
+
+	# Handles post insertion of a device path
+	def insertion(self, path):
+		LOGGER.log("Insertion at " + path)
+		device = Device(path)
+		CONNECTED_DEVICES.append(device)
+		device.deauthenticate()
+		# TODO: Prompt for authentification, allow for methods for either using X or using terminal
+
+	# Handles post removal of a device path
+	def removal(self, path):
+		LOGGER.log("Removal at " + path)
+		self.remove_device_by_path(path)
 
 	# Removes a device from the list by it's path
 	def remove_device_by_path(self, path):
@@ -90,12 +97,6 @@ class Listener:
 		if not (hub[:3] == "usb" and hub[3:].isdigit()):  # Not the root connection of the USB
 			return False
 		return Paths.BUS_DIR + hub + "/" + port + "/"
-
-
-
-
-
-
 
 # TODO: REMOVE DEBUG CODE
 l = Listener()

@@ -19,6 +19,7 @@ For any further information contact me at oliver@neven.dk
 '''
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
+from paths import Paths
 
 # A simple class containg different information about a connected USB device
 class Device:
@@ -58,6 +59,27 @@ class Device:
 		digest = hashes.Hash(hashes.SHA512(), backend=default_backend())
 		digest.update(VENDOR + VENDOR_ID + PRODUCT + PRODUCT_ID + SERIAL)
 		HASH = digest.finalize()
+
+	# Matches the password hash with the one stored on the disk
+	# If it matches, it authenticates the device and returns true
+	# If not, it returns false
+	def check_authentication(self, password_hash):
+		with open(Paths.PASSWORD_FILE, "rb") as f:
+			stored_password_hash = f.read()
+			f.close()
+		return password_hash == stored_password_hash
+
+	# Authenticates the device
+	def authenticate(self):
+		with open(PATH + Paths.AUTHORIZED_FILENAME, "wb") as f:
+			f.write("1".encode("UTF-8"))
+			f.close()
+
+	# Deauthenticates the device
+	def deauthenticate(self):
+		with open(PATH + Paths.AUTHORIZED_FILENAME, "wb") as f:
+			f.write("0".encode("UTF-8"))
+			f.close()
 
 	# Some getters for the device's information
 	def get_path(self):
