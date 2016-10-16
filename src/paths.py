@@ -17,6 +17,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 For any further information contact me at oliver@neven.dk
 '''
+# Some global paths needed in various circumstances
 class Paths:
 	INSTALL_DIR 	= "/usr/bin/usbauth/"			# Directory where the program is installed
 	PASSWORD_FILE	= INSTALL_DIR + "passwd"		# SHA512 encrypted password byte file

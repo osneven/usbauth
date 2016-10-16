@@ -19,39 +19,83 @@ For any further information contact me at oliver@neven.dk
 '''
 from threading import Thread
 from logger import Logger
-from pyudev import Context
-from pyudev.Monitor import from_netlink
+from pyudev import Context, Monitor
 from sys import exit
+from paths import Paths
+from device import Device
 
 # This class listens for new USB device connections, and sends them through the authentication process
 class Listener:
 
 	# Initializes a logger
 	def __init__(self):
-		global LOGGER
+		global LOGGER, CONNECTED_DEVICES
 		LOGGER = Logger()
+		CONNECTED_DEVICES = []
 
 	# Starts listening for USB connections
 	def listen(self):
 
 		# Initialize pyudev monitor
 		ctx = Context()
-		mon = from_netlink(ctx)
+		mon = Monitor.from_netlink(ctx)
 		mon.start()
 
 		# Start listening and send all new connections to another thread
 		LOGGER.log("Listening for USB devices")
-		connected_device_paths = []
 		try:
-			for dev in iter(mon.poll(), None):
-				connection_thread = Thread(target=Listener.connection, args=[self, dev, connected_device_paths])
+			for dev in iter(mon.poll, None):
+				connection_thread = Thread(target=Listener.connection, args=[self, dev])
 				connection_thread.daemon = True
 				connection_thread.start()
 		except KeyboardInterrupt:
 			LOGGER.log("Exited by user!")
 			exit(1)
 
-		# Sends a USB device to authentication if necessary
+	# Sends a USB device to authentication if necessary
+	def connection(self, dev):
+
+		# Get some connection information beforing continuing to authentication process
+		path = self.connection_device_path(dev)
+		if not path: return
+		insertion = self.connection_type(dev)
+		
+		# If connection is an insertion
+		if insertion:
+			LOGGER.log("Insertion at " + path)
+			device = Device(path)
+			CONNECTED_DEVICES.append(device)
+		# If it was a removal
+		else:
+			LOGGER.log("Removal at " + path)
+			self.remove_device_by_path(path)
+
+	# Removes a device from the list by it's path
+	def remove_device_by_path(self, path):
+		for device in CONNECTED_DEVICES:
+			if device.get_path() == path:
+				CONNECTED_DEVICES.remove(device)
+				break
+
+	# Returns true if device was inserted into the hub, and false if it was removed from it
+	def connection_type(self, dev):
+		return dev.get("ACTION") == "add"
+
+	# Returns the full path to the device's system files, e.g. authorized, vendor, product, etc.
+	# Returns false if it's not the root of the device's path
+	def connection_device_path(self, dev):
+		dev_path = dev.get("DEVPATH").split("/")
+		hub = dev_path[-2]  # The hub the USB is connected to
+		port = dev_path[-1]  # The port the USB is connected to
+		if not (hub[:3] == "usb" and hub[3:].isdigit()):  # Not the root connection of the USB
+			return False
+		return Paths.BUS_DIR + hub + "/" + port + "/"
+
+
+
+
+
+
 
 # TODO: REMOVE DEBUG CODE
 l = Listener()
