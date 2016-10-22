@@ -50,3 +50,12 @@ class PasswordManager:
 			f.close()
 		if LOGGER is not None:
 			LOGGER.log("Password was updated")
+
+	# Returns true if the given cleartext password equals the ciphertext password stored on the disk
+	def verify_password_hash(self, cleartext_password):
+		digest = hashes.Hash(hashes.SHA512(), backend=default_backend())
+		digest.update(cleartext_password.encode("UTF-8"))
+		with open(Paths.PASSWORD_FILE, "rb") as f:
+			match = f.read() == digest.finalize()
+			f.close()
+			return match

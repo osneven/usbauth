@@ -25,7 +25,7 @@ class Paths:
 	INSTALL_DIR 		= "/usr/bin/usbauth/"			# Directory where the program is installed.
 	USER_DIR			= expanduser("~/.usbauth/")		# Directory where user specific information is stored.
 	PASSWORD_FILE		= USER_DIR + "passwd"			# SHA512 encrypted password byte file.
-	WHITELIST_FILE		= USER_DIR + "whitelist"		# AES256 encrypted whitelist python pickle file.
+	DATABASE_FILE		= USER_DIR + "database.db"		# AES256 encrypted pickle file.
 	PROMPT_TYPE_FILE	= USER_DIR + "prompt_type"		# File containing the information on how to prompt for a password verification.
 	LOG_DIR 			= USER_DIR + "logs/"			# Directory where logs are stored.
 	PID_FILE			= INSTALL_DIR + "pid"			# File containing pid of running process, if any.
