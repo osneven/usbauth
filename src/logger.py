@@ -26,16 +26,17 @@ class Logger:
 	# Initializes an empty log file
 	def __init__(self):
 		global LOG_FILE
+		Paths.create_paths()
 		LOG_FILE = Paths.LOG_DIR + self.generate_log_name()
-		#open(LOG_FILE, "wb").close() # Initialize empty file
+		open(LOG_FILE, "wb").close() # Initialize empty file
 
 	# Logs a message to stdout and the log file
 	def log(self, message):
 		message = self.get_time_stamp() + ": " + message + "\n"
 		print(message, end="")
-		#with open(LOG_FILE, "ab") as f:
-		#	f.write(message.encode("UTF-8"))
-		#	f.close()
+		with open(LOG_FILE, "ab") as f:
+			f.write(message.encode("UTF-8"))
+			f.close()
 
 	# Generates and returns a new log name using this format:
 	#	USBAUTH-LOG_<cureent time stamp>

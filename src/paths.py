@@ -17,13 +17,25 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 For any further information contact me at oliver@neven.dk
 '''
+from os.path import expanduser, exists
+from os import makedirs
+
 # Some global paths needed in various circumstances
 class Paths:
 	INSTALL_DIR 		= "/usr/bin/usbauth/"			# Directory where the program is installed.
-	PASSWORD_FILE		= INSTALL_DIR + "passwd"		# SHA512 encrypted password byte file.
-	WHITELIST_FILE		= INSTALL_DIR + "whitelist"		# AES256 encrypted whitelist python pickle file.
+	USER_DIR			= expanduser("~/.usbauth/")		# Directory where user specific information is stored.
+	PASSWORD_FILE		= USER_DIR + "passwd"			# SHA512 encrypted password byte file.
+	WHITELIST_FILE		= USER_DIR + "whitelist"		# AES256 encrypted whitelist python pickle file.
+	PROMPT_TYPE_FILE	= USER_DIR + "prompt_type"		# File containing the information on how to prompt for a password verification.
+	LOG_DIR 			= USER_DIR + "logs/"			# Directory where logs are stored.
 	PID_FILE			= INSTALL_DIR + "pid"			# File containing pid of running process, if any.
-	PROMPT_TYPE_FILE	= INSTALL_DIR + "prompt_type"	# File containing the information on how to prompt for a password verification.
-	LOG_DIR 			= INSTALL_DIR + "logs/"			# Directory where logs are stored.
 	BUS_DIR				= "/sys/bus/usb/devices/"		# Directory where USB devices "connect".
-	AUTHORIZED_FILENAME	= "authorized"				# The file name, needs to be prefixed by the root of a device path, of the system file that authenticates a device.
+	AUTHORIZED_FILENAME	= "authorized"					# The file name, needs to be prefixed by the root of a device path, of the system file that authenticates a device.
+
+	# Check if all paths above exists, if not, create them
+	@staticmethod
+	def create_paths():
+		directories = [Paths.USER_DIR, Paths.LOG_DIR]
+		for directory in directories:
+			if not exists(directory):
+				makedirs(directory)

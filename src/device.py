@@ -21,7 +21,7 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from paths import Paths
 
-# A simple class containg different information about a connected USB device
+# A class containg different information about a connected USB device and used for authentication of said device
 class Device:
 
 	# Initializes the USB device using the root of its path and gathers information about it, and saves it all as bytes like objects
