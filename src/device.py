@@ -59,18 +59,27 @@ class Device:
 		digest = hashes.Hash(hashes.SHA512(), backend=default_backend())
 		digest.update(VENDOR + VENDOR_ID + PRODUCT + PRODUCT_ID + SERIAL)
 		HASH = digest.finalize()
-		
+
 	# Authenticates the device
 	def authenticate(self):
+		global AUTHENTICATED
 		with open(PATH + Paths.AUTHORIZED_FILENAME, "wb") as f:
 			f.write("1".encode("UTF-8"))
 			f.close()
+			AUTHENTICATED = True
 
 	# Deauthenticates the device
 	def deauthenticate(self):
+		global AUTHENTICATED
 		with open(PATH + Paths.AUTHORIZED_FILENAME, "wb") as f:
 			f.write("0".encode("UTF-8"))
 			f.close()
+			AUTHENTICATED = False
+
+	# Whitelists the device if the state is true, removes it from the whitelist if not
+	def update_whitelist(self, state):
+		global WHITELISTED
+		WHITELISTED = state
 
 	# Some getters for the device's information
 	def get_path(self):
@@ -87,3 +96,7 @@ class Device:
 		return SERIAL
 	def get_hash(self):
 		return HASH
+	def is_whitelisted(self):
+		return WHITELISTED
+	def is_authenticated(self):
+		return AUTHENTICATED

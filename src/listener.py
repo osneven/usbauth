@@ -23,15 +23,16 @@ from pyudev import Context, Monitor
 from sys import exit
 from paths import Paths
 from device import Device
+from device_manager import DeviceManager
 
 # This class listens for new USB device connections, and sends them through the authentication process
 class Listener:
 
 	# Initializes a logger
 	def __init__(self):
-		global LOGGER, CONNECTED_DEVICES
+		global LOGGER, MANAGER
 		LOGGER = Logger()
-		CONNECTED_DEVICES = []
+		MANAGER = DeviceManager()
 
 	# Starts listening for USB connections
 	def listen(self):
@@ -68,21 +69,12 @@ class Listener:
 	def insertion(self, path):
 		LOGGER.log("Insertion at " + path)
 		device = Device(path)
-		CONNECTED_DEVICES.append(device)
-		device.deauthenticate()
-		# TODO: Prompt for authentification, allow for methods for either using X or using terminal
+		MANAGER.add_device(device)
+		MANAGER.dump_database_file()
 
 	# Handles post removal of a device path
 	def removal(self, path):
 		LOGGER.log("Removal at " + path)
-		self.remove_device_by_path(path)
-
-	# Removes a device from the list by it's path
-	def remove_device_by_path(self, path):
-		for device in CONNECTED_DEVICES:
-			if device.get_path() == path:
-				CONNECTED_DEVICES.remove(device)
-				break
 
 	# Returns true if device was inserted into the hub, and false if it was removed from it
 	def connection_type(self, dev):
