@@ -10,12 +10,12 @@ A USB device authentcation tool. When a USB device is plugged into the computer,
 ## Installation
 1.  Clone the project: `git clone https://github.com/osneven/usbauth.git`
 2.  Change into the directory: `cd ./usbauth`
-3.  Execute the installation script and follow the instrctions: `./install.sh`
-4.  Clean up installtion folder: `cd ..`, `rm -r ./usbauth`
-5.  Installation complete, start the daemon: `sudo /etc/usbauth/usbauth --start`
+3.  Execute the setup script and follow the instrctions: `./setup.sh`
+4.  Clean up the setup folder folder: `cd ..`, `rm -r ./usbauth`
+5.  Installation complete, start the daemon: `sudo /usr/bin/usbauth/usbauth --start` # STILL W.I.P!
 
 ## Usage
-For complete help and usage, run: `/etc/usbauth/usbauth --help`
+For complete help and usage, run: `/usr/bin/usbauth/usbauth --help` # STILL W.I.P!
 
 ## License
 The complete project is licensed under the GNU GENERAL PUBLIC LICENSE version 3(GPL-3.0).
