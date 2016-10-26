@@ -75,6 +75,7 @@ class Listener:
 	# Handles post removal of a device path
 	def removal(self, path):
 		LOGGER.log("Removal at " + path)
+		MANAGER.remove_device(MANAGER.get_device_by_path(path))
 
 	# Returns true if device was inserted into the hub, and false if it was removed from it
 	def connection_type(self, dev):

@@ -26,8 +26,9 @@ class Device:
 
 	# Initializes the USB device using the root of its path and gathers information about it, and saves it all as bytes like objects
 	def __init__(self, device_path):
-		global PATH
+		global PATH, CONNECTED
 		PATH = device_path
+		CONNECTED = True
 		self.read_device_information()
 		self.generate_device_hash()
 
@@ -63,18 +64,20 @@ class Device:
 	# Authenticates the device
 	def authenticate(self):
 		global AUTHENTICATED
-		with open(PATH + Paths.AUTHORIZED_FILENAME, "wb") as f:
-			f.write("1".encode("UTF-8"))
-			f.close()
-			AUTHENTICATED = True
+		if CONNECTED:
+			with open(PATH + Paths.AUTHORIZED_FILENAME, "wb") as f:
+				f.write("1".encode("UTF-8"))
+				f.close()
+				AUTHENTICATED = True
 
 	# Deauthenticates the device
 	def deauthenticate(self):
 		global AUTHENTICATED
-		with open(PATH + Paths.AUTHORIZED_FILENAME, "wb") as f:
-			f.write("0".encode("UTF-8"))
-			f.close()
-			AUTHENTICATED = False
+		if CONNECTED:
+			with open(PATH + Paths.AUTHORIZED_FILENAME, "wb") as f:
+				f.write("0".encode("UTF-8"))
+				f.close()
+				AUTHENTICATED = False
 
 	# Whitelists the device if the state is true, removes it from the whitelist if not
 	def update_whitelist(self, state):
@@ -100,3 +103,9 @@ class Device:
 		return WHITELISTED
 	def is_authenticated(self):
 		return AUTHENTICATED
+	def is_connected(self):
+		return CONNECTED
+	def set_connected(self, state, path="Removed"):
+		global CONNECTED, PATH
+		CONNECTED = state
+		PATH = path

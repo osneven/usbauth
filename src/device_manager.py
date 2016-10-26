@@ -20,6 +20,9 @@ For any further information contact me at oliver@neven.dk
 import pickle
 from paths import Paths
 
+# A class used for handling:
+#	password verification for USB device authentication, and
+#	storing data about all USB devices it handles.
 class DeviceManager:
 	def __init__(self):
 		global CONNECTED_DEVICES
@@ -37,6 +40,15 @@ class DeviceManager:
 		device.deauthenticate()
 		DEVICES.append(device)
 
+	# States a device as not connected, leaves it in the DEVIES list
+	# NOTE: This also sets the device's PATH to "Removed"
+	def remove_device(self, device):
+		global DEVICES
+		# Looks for the matching device in the list
+		for i in range(len(DEVICES)):
+			if DEVICES[i].get_hash() == device.get_hash(): 	# Match found
+				DEVICES[i].set_connected(False) 			# State is as "not connected"
+
 	# Load and return data stored in the database file
 	def load_database_file(self):
 		Paths.create_paths()
@@ -49,3 +61,17 @@ class DeviceManager:
 	# Dump the devices into the database file
 	def dump_database_file(self):
 		pickle.dump(DEVICES, open(Paths.DATABASE_FILE, "wb"))
+
+	# Returns the device that has a specific path
+	def get_device_by_path(self, path):
+		for device in DEVICES:
+			if device.get_path() == path:
+				return device
+
+	# Returns a list of all non authenticated USB device still connected to the hub
+	def list_nonauthenticated_devices(self):
+		nonauthenticated_devices = []
+		for device in DEVICES:
+			if not device.is_authenticated and device.is_connected:
+				nonauthenticated_devices.append(device)
+		return nonauthenticated_devices
