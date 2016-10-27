@@ -75,7 +75,6 @@ class Device:
 				f.write("1".encode("UTF-8"))
 				f.close()
 				self.AUTHENTICATED = True
-				return True
 
 	# Deauthenticates the device on system level, reguires root permissions!
 	def deauthenticate(self):
@@ -84,7 +83,6 @@ class Device:
 				f.write("0".encode("UTF-8"))
 				f.close()
 				self.AUTHENTICATED = False
-				return True
 
 	# Whitelists the device if the state is true, removes it from the whitelist if not
 	def update_whitelist(self, state):
@@ -105,6 +103,9 @@ class Device:
 		return self.SERIAL
 	def get_hash(self):
 		return self.HASH
+	def get_hash_as_hex(self):
+		from binascii import hexlify
+		return hexlify(self.HASH).decode("ASCII")
 	def is_whitelisted(self):
 		return self.WHITELISTED
 	def is_authenticated(self):
@@ -114,5 +115,17 @@ class Device:
 	def set_connected(self, state, path="Removed"):
 		self.CONNECTED = state
 		self.PATH = path
+
+	# Returns a string containing the vendor and then product name
 	def to_name_string(self):
 		return self.VENDOR.decode("UTF-8").strip() + " " + self.PRODUCT.decode("UTF-8").strip()
+	# Returns a string containing the vendor and then product hex
+	def to_id_string(self):
+		return "(" + self.VENDOR_ID.decode("UTF-8").strip() + ":" + self.PRODUCT_ID.decode("UTF-8").strip() + ")"
+	# Return full description for this device
+	def get_description(self):
+		desc = self.to_name_string() + " " + self.to_id_string() + "\n"
+		desc += "Serial:\t" + self.get_serial().decode("UTF-8").strip() + "\n"
+		desc += "Hash:\t" + self.get_hash_as_hex() + "\n"
+		desc += "Path:\t" + self.get_path() + "\n"
+		return desc

@@ -41,7 +41,7 @@ class DeviceManager:
 		device.deauthenticate()
 		self.DEVICES.append(device)
 
-	# States a device as not connected, leaves it in the DEVIES list
+	# States a device as not connected, leaves it in the DEVICES list
 	# NOTE: This also sets the device's PATH to "Removed"
 	def remove_device(self, device):
 		# Looks for the matching device in the list
@@ -49,6 +49,13 @@ class DeviceManager:
 			if self.DEVICES[i].get_hash() == device.get_hash(): # Match found
 				self.DEVICES[i].set_connected(False) 			# State is as "not connected"
 				break
+
+	# States all connected devices as non connected, leaves it in the DEVICES list
+	# NOTE: This also sets the device's PATH to "Removed"
+	def remove_all_devices(self):
+		for device in self.DEVICES:
+			if device.is_connected():
+				device.set_connected(False)
 
 	# Load and return data stored in the database file
 	def load_database_file(self):
@@ -70,10 +77,13 @@ class DeviceManager:
 				return device
 		return None
 
-	# Returns a list of all non authenticated USB device still connected to the hub
-	def list_nonauthenticated_devices(self):
+	# Returns a list of all the connected devices
+	# Is nonauthenticated is true, it only returns connected and nonauthenticated devies
+	def list_connected_devices(self, nonauthenticated=False):
 		nonauthenticated_devices = []
 		for device in self.DEVICES:
-			if not device.is_authenticated() and device.is_connected():
+			if device.is_connected():
+				if nonauthenticated and device.is_authenticated():
+					continue
 				nonauthenticated_devices.append(device)
 		return nonauthenticated_devices

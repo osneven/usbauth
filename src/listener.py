@@ -72,7 +72,7 @@ class Listener:
 	# Handles post insertion of a device path
 	def insertion(self, path):
 		device = Device(path)
-		LOGGER.log("Insertion of " + device.to_name_string() + " at " + path)
+		LOGGER.log("Insertion of " + device.to_name_string() + " " + device.to_id_string() + " at " + path)
 		MANAGER.add_device(device)
 		MANAGER.dump_database_file()
 
@@ -81,7 +81,7 @@ class Listener:
 		device = MANAGER.get_device_by_path(path)
 		device_name_if_found = ""
 		if not device is None:
-			device_name_if_found =  "of " + device.to_name_string() + " "
+			device_name_if_found =  "of " + device.to_name_string() + " " + device.to_id_string() + " "
 			MANAGER.remove_device(device)
 			MANAGER.dump_database_file()
 		else: LOGGER.log("Unable to locate the removed device in the database.")

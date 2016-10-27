@@ -26,7 +26,6 @@ class Paths:
 	CONFIG_DIR			= INSTALL_DIR + "config/"		# Directory where the program files that are not source files are located.
 	PASSWORD_FILE		= CONFIG_DIR + "passwd"			# SHA512 encrypted password byte file.
 	DATABASE_FILE		= CONFIG_DIR + "database.db"	# AES256 encrypted pickle file.
-	PROMPT_TYPE_FILE	= CONFIG_DIR + "prompt_type"	# File containing the information on how to prompt for a password verification.
 	PID_FILE			= CONFIG_DIR + "pid"			# File containing pid of running process, if any.
 	LOG_DIR 			= INSTALL_DIR + "logs/"			# Directory where logs are stored.
 	BUS_DIR				= "/sys/bus/usb/devices/"		# Directory where USB devices "connect".

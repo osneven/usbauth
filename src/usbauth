@@ -34,11 +34,13 @@ def parse_args():
     import argparse
     parser = argparse.ArgumentParser(description="USBAuth, a USB device authentication tool")
     group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument("--start", action="store_true", help="Starts the program")
-    group.add_argument("--stop", action="store_true", help="Stops the program, if it is running")
-    group.add_argument("-a", "--authenticate", action="store_true", help="Prompts for authentication of a USB device")
-    group.add_argument("-p", "--password", action="store_true", help="Prompts for a new authentication password")
-    group.add_argument("-w", "--whitelist", action="store_true", help="Prompts for whitelisting of a USB device")
+    group.add_argument("--start", action="store_true", help="starts the program")
+    group.add_argument("--stop", action="store_true", help="stops the program, if it is running")
+    group.add_argument("-a", "--authenticate", type=int, help="prompts for authentication of a USB device with a chosen id")
+    group.add_argument("-l", "--list", action="store_true", help="shows a list of all the connected USB devices")
+    group.add_argument("-ln", "--list-nonauthenticated", action="store_true", help="shows a list of all the nonauthenticated connected USB devices")
+    group.add_argument("-p", "--password", action="store_true", help="prompts for a new authentication password")
+    group.add_argument("-w", "--whitelist", type=int, help="prompts for whitelisting of a USB device with a chosen id")
     return parser.parse_args()
 
 #
@@ -113,12 +115,37 @@ def stop_program():
 # Methods for authentication
 #
 
+# Prompts for authentication
+def authenticate(id):
+    from device_manager import DeviceManager
+    devices = DeviceManager().list_connected_devices(nonauthenticated=True)
+    if id in range(len(devices)):
+        from password_manager import PasswordManager
+        from getpass import getpass
+        device = devices[id]
+        print("Authentication undergoing on:\n" + device.get_description())
+        if PasswordManager(None).verify_password_hash(getpass("Enter authentication password:")):
+            device.authenticate()
+            print("Authentication success.")
+        else:
+            print("Authentication failure: Bad password.")
+    else:
+        print("No device with that ID.")
 
+#
+# Methods for listing USB devices
+#
 
-
-
-
-
+# Prints a list of all the connected devices
+# Is nonauthenticated is true, it only prints connected and nonauthenticated devies
+def list_connected_devices(nonauthenticated):
+    from device_manager import DeviceManager
+    devices = DeviceManager().list_connected_devices(nonauthenticated=nonauthenticated)
+    if len(devices) > 0:
+        for i, device in enumerate(devices):
+            print("[" + str(i) + "]", device.to_name_string(), device.to_id_string() + ", authenticated:", device.is_authenticated())
+    else:
+        print("No devices to list.")
 
 #
 # Script starts here
@@ -133,6 +160,8 @@ if not check_for_root():
     exit()
 if args.start: start_program()
 elif args.stop: stop_program()
-elif args.authenticate: pass
+elif args.authenticate is not None: authenticate(args.authenticate)
 elif args.password: pass
 elif args.whitelist: pass
+elif args.list: list_connected_devices(False)
+elif args.list_nonauthenticated: list_connected_devices(True)
