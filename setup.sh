@@ -57,9 +57,19 @@ copy_source_files() {
 # Sets the USB device authentication password
 set_password() {
 	echo "[*] Updating USB device authentication password ..."
-	echo "Enter a new authentication password:"
-	read -s password
-	echo
+	password="a"
+	verify="b"
+	while true; do
+		echo "Enter a new authentication password:"
+		read -s password
+		echo "Verify the authentication password:"
+		read -s verify
+		if [[ $password != $verify ]]; then
+			echo "[-] The passwords did not match, try agian."
+		else
+			break
+		fi
+	done
 	python3 -c "from password_manager import PasswordManager; pm = PasswordManager(None); pm.update_password_hash('$password')"
 }
 

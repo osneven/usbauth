@@ -24,30 +24,31 @@ from paths import Paths
 #	password verification for USB device authentication, and
 #	storing data about all USB devices it handles.
 class DeviceManager:
+	DEVICES = []
+
 	def __init__(self):
-		global CONNECTED_DEVICES
-		DEVICES = self.load_database_file()
+		self.DEVICES = self.load_database_file()
 
 	# Add a device to the database and deauthenticates it
 	def add_device(self, device):
 		# Removes any matching device
-		for dev in DEVICES:
-			if dev.get_hash() == device.get_hash():
-				DEVICES.remove(dev)
+		for i in range(len(self.DEVICES)):
+			if self.DEVICES[i].get_hash() == device.get_hash():
+				del self.DEVICES[i]
 				break
 
 		# Adds the device
 		device.deauthenticate()
-		DEVICES.append(device)
+		self.DEVICES.append(device)
 
 	# States a device as not connected, leaves it in the DEVIES list
 	# NOTE: This also sets the device's PATH to "Removed"
 	def remove_device(self, device):
-		global DEVICES
 		# Looks for the matching device in the list
-		for i in range(len(DEVICES)):
-			if DEVICES[i].get_hash() == device.get_hash(): 	# Match found
-				DEVICES[i].set_connected(False) 			# State is as "not connected"
+		for i in range(len(self.DEVICES)):
+			if self.DEVICES[i].get_hash() == device.get_hash(): # Match found
+				self.DEVICES[i].set_connected(False) 			# State is as "not connected"
+				break
 
 	# Load and return data stored in the database file
 	def load_database_file(self):
@@ -60,18 +61,19 @@ class DeviceManager:
 
 	# Dump the devices into the database file
 	def dump_database_file(self):
-		pickle.dump(DEVICES, open(Paths.DATABASE_FILE, "wb"))
+		pickle.dump(self.DEVICES, open(Paths.DATABASE_FILE, "wb"))
 
 	# Returns the device that has a specific path
 	def get_device_by_path(self, path):
-		for device in DEVICES:
+		for device in self.DEVICES:
 			if device.get_path() == path:
 				return device
+		return None
 
 	# Returns a list of all non authenticated USB device still connected to the hub
 	def list_nonauthenticated_devices(self):
 		nonauthenticated_devices = []
-		for device in DEVICES:
-			if not device.is_authenticated and device.is_connected:
+		for device in self.DEVICES:
+			if not device.is_authenticated() and device.is_connected():
 				nonauthenticated_devices.append(device)
 		return nonauthenticated_devices

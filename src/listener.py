@@ -67,15 +67,21 @@ class Listener:
 
 	# Handles post insertion of a device path
 	def insertion(self, path):
-		LOGGER.log("Insertion at " + path)
 		device = Device(path)
+		LOGGER.log("Insertion of " + device.to_name_string() + " at " + path)
 		MANAGER.add_device(device)
 		MANAGER.dump_database_file()
 
 	# Handles post removal of a device path
 	def removal(self, path):
-		LOGGER.log("Removal at " + path)
-		MANAGER.remove_device(MANAGER.get_device_by_path(path))
+		device = MANAGER.get_device_by_path(path)
+		device_name_if_found = ""
+		if not device is None:
+			device_name_if_found =  "of " + device.to_name_string() + " "
+			MANAGER.remove_device(device)
+			MANAGER.dump_database_file()
+		else: LOGGER.log("Unable to locate the removed device in the database.")
+		LOGGER.log("Removal " + device_name_if_found + "at " + path)
 
 	# Returns true if device was inserted into the hub, and false if it was removed from it
 	def connection_type(self, dev):
@@ -90,7 +96,3 @@ class Listener:
 		if not (hub[:3] == "usb" and hub[3:].isdigit()):  # Not the root connection of the USB
 			return False
 		return Paths.BUS_DIR + hub + "/" + port + "/"
-
-# TODO: REMOVE DEBUG CODE
-l = Listener()
-l.listen()

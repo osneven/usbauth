@@ -23,19 +23,27 @@ from paths import Paths
 
 # A class containg different information about a connected USB device and handles authentication on the system level
 class Device:
+	PATH = None
+	CONNECTED = None
+	VENDOR = None
+	VENDOR_ID = None
+	PRODUCT	= None
+	PRODUCT_ID = None
+	SERIAL = None
+	HASH = None
+	AUTHENTICATED = None
+	WHITELISTED = False
 
 	# Initializes the USB device using the root of its path and gathers information about it, and saves it all as bytes like objects
 	def __init__(self, device_path):
-		global PATH, CONNECTED
-		PATH = device_path
-		CONNECTED = True
+		self.PATH = device_path
+		self.CONNECTED = True
 		self.read_device_information()
 		self.generate_device_hash()
 
 	# Reads the following information about the device and stores it in variables:
 	#	vendor name, vendor id, product name, product id and serial
 	def read_device_information(self):
-		global VENDOR, VENDOR_ID, PRODUCT, PRODUCT_ID, SERIAL
 
 		# Pre-define the need files, all of them needs to be prefixed by the root of the device's path
 		information_files = ["manufacturer", "idVendor", "product", "idProduct", "serial"]
@@ -43,69 +51,74 @@ class Device:
 
 		# Read the files
 		for file_name in information_files:
-			with open(PATH + file_name, "rb") as f:
+			with open(self.PATH + file_name, "rb") as f:
 				information.append(f.read())
 				f.close()
 
 		# Set the information variables
-		VENDOR		= information[0]
-		VENDOR_ID	= information[1]
-		PRODUCT		= information[2]
-		PRODUCT_ID	= information[3]
-		SERIAL		= information[4]
+		self.VENDOR		= information[0]
+		self.VENDOR_ID	= information[1]
+		self.PRODUCT		= information[2]
+		self.PRODUCT_ID	= information[3]
+		self.SERIAL		= information[4]
 
 	# Generates a SHA512 hash using the information gathered about the device and stores it in the hash variable
 	def generate_device_hash(self):
-		global HASH
 		digest = hashes.Hash(hashes.SHA512(), backend=default_backend())
-		digest.update(VENDOR + VENDOR_ID + PRODUCT + PRODUCT_ID + SERIAL)
-		HASH = digest.finalize()
+		digest.update(self.VENDOR + self.VENDOR_ID + self.PRODUCT + self.PRODUCT_ID + self.SERIAL)
+		self.HASH = digest.finalize()
 
-	# Authenticates the device
+	# Authenticates the device on system level, reguires root permissions!
 	def authenticate(self):
-		global AUTHENTICATED
-		if CONNECTED:
-			with open(PATH + Paths.AUTHORIZED_FILENAME, "wb") as f:
-				f.write("1".encode("UTF-8"))
-				f.close()
-				AUTHENTICATED = True
+		try:
+			if self.CONNECTED:
+				with open(self.PATH + Paths.AUTHORIZED_FILENAME, "wb") as f:
+					f.write("1".encode("UTF-8"))
+					f.close()
+					self.AUTHENTICATED = True
+					return True
+		except PermissionError:
+			return False
 
-	# Deauthenticates the device
+	# Deauthenticates the device on system level, reguires root permissions!
 	def deauthenticate(self):
-		global AUTHENTICATED
-		if CONNECTED:
-			with open(PATH + Paths.AUTHORIZED_FILENAME, "wb") as f:
-				f.write("0".encode("UTF-8"))
-				f.close()
-				AUTHENTICATED = False
+		try:
+			if self.CONNECTED:
+				with open(self.PATH + Paths.AUTHORIZED_FILENAME, "wb") as f:
+					f.write("0".encode("UTF-8"))
+					f.close()
+					self.AUTHENTICATED = False
+					return True
+		except PermissionError:
+			return False
 
 	# Whitelists the device if the state is true, removes it from the whitelist if not
 	def update_whitelist(self, state):
-		global WHITELISTED
-		WHITELISTED = state
+		self.WHITELISTED = state
 
 	# Some getters for the device's information
 	def get_path(self):
-		return PATH
+		return self.PATH
 	def get_vendor(self):
-		return VENDOR
+		return self.VENDOR
 	def get_vendor_id(self):
-		return VENDOR_ID
+		return self.VENDOR_ID
 	def get_product(self):
-		return PRODUCT
+		return self.PRODUCT
 	def get_product_id(self):
-		return PRODUCT_ID
+		return self.PRODUCT_ID
 	def get_serial(self):
-		return SERIAL
+		return self.SERIAL
 	def get_hash(self):
-		return HASH
+		return self.HASH
 	def is_whitelisted(self):
-		return WHITELISTED
+		return self.WHITELISTED
 	def is_authenticated(self):
-		return AUTHENTICATED
+		return self.AUTHENTICATED
 	def is_connected(self):
-		return CONNECTED
+		return self.CONNECTED
 	def set_connected(self, state, path="Removed"):
-		global CONNECTED, PATH
-		CONNECTED = state
-		PATH = path
+		self.CONNECTED = state
+		self.PATH = path
+	def to_name_string(self):
+		return self.VENDOR.decode("UTF-8").strip() + " " + self.PRODUCT.decode("UTF-8").strip()
