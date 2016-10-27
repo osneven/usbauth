@@ -43,6 +43,8 @@ create_install_dir() {
 remove_source_files() {
 	echo "[*] Removing source files ..."
 	rm -rf $INSTALL_DIR
+	echo "[*] Removing symbolic link ..."
+	rm /usr/local/sbin/usbauth
 }
 
 # Copies the source files to the installation directory.
@@ -73,6 +75,21 @@ set_password() {
 	python3 -c "from password_manager import PasswordManager; pm = PasswordManager(None); pm.update_password_hash('$password')"
 }
 
+# Sets the usbauth launcher to be execuateble and create a symbolic link to /usr/local/sbin
+make_executable() {
+	copy=usbauth
+	echo "[*] Making the $INSTALL_DIR$copy file executable ..."
+	chmod +x $INSTALL_DIR$copy
+	echo "[*] Creating a symbolic from $INSTALL_DIR$copy to /usr/local/sbin/usbauth ..."
+	ln -s $INSTALL_DIR$copy /usr/local/sbin/usbauth
+}
+
+# Give user feedback
+finished() {
+	echo "[*] Installation finished"
+	echo "Run 'usbauth --help' to see launch options."
+}
+
 check_for_root			# Check for root permissions
 get_setup_dir				# Save the setup directory path in SETUP_DIR
 get_install_dir			# Save the install directory path in INSTALL_DIR
@@ -80,3 +97,5 @@ create_install_dir	# Creates the install directory
 copy_source_files		# Copy source files
 cd $INSTALL_DIR
 set_password				# Set a new authentication password
+make_executable			# Make the usbauth file executable
+finished						# Finished!

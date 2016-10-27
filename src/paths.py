@@ -22,13 +22,13 @@ from os import makedirs
 
 # Some global paths needed in various circumstances
 class Paths:
-	INSTALL_DIR 		= "/usr/bin/usbauth/"			# Directory where the program source files is located.
+	INSTALL_DIR 		= "/opt/usbauth/"				# Directory where the program source files is located.
 	CONFIG_DIR			= INSTALL_DIR + "config/"		# Directory where the program files that are not source files are located.
 	PASSWORD_FILE		= CONFIG_DIR + "passwd"			# SHA512 encrypted password byte file.
 	DATABASE_FILE		= CONFIG_DIR + "database.db"	# AES256 encrypted pickle file.
 	PROMPT_TYPE_FILE	= CONFIG_DIR + "prompt_type"	# File containing the information on how to prompt for a password verification.
-	LOG_DIR 			= INSTALL_DIR + "logs/"			# Directory where logs are stored.
 	PID_FILE			= CONFIG_DIR + "pid"			# File containing pid of running process, if any.
+	LOG_DIR 			= INSTALL_DIR + "logs/"			# Directory where logs are stored.
 	BUS_DIR				= "/sys/bus/usb/devices/"		# Directory where USB devices "connect".
 	AUTHORIZED_FILENAME	= "authorized"					# The file name, needs to be prefixed by the root of a device path, of the system file that authenticates a device.
 

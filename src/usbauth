@@ -1,0 +1,138 @@
+#!/usr/bin/python3
+#
+# This script is for easy-of-use from the CLI while launching USBAuth
+#
+'''
+USBAuth, a USB device authentication tool.
+Copyright (C) 2016  Oliver Stochholm Neven
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+For any further information contact me at oliver@neven.dk
+'''
+from paths import Paths
+from os import chdir
+
+# Returns true if the script is running with root privileges
+def check_for_root():
+    from os import geteuid
+    return geteuid() == 0
+
+# Handles argument parsing from the CLI
+def parse_args():
+    import argparse
+    parser = argparse.ArgumentParser(description="USBAuth, a USB device authentication tool")
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument("--start", action="store_true", help="Starts the program")
+    group.add_argument("--stop", action="store_true", help="Stops the program, if it is running")
+    group.add_argument("-a", "--authenticate", action="store_true", help="Prompts for authentication of a USB device")
+    group.add_argument("-p", "--password", action="store_true", help="Prompts for a new authentication password")
+    group.add_argument("-w", "--whitelist", action="store_true", help="Prompts for whitelisting of a USB device")
+    return parser.parse_args()
+
+#
+# Methods for staring and stopping the program
+#
+
+# Removes the PID file
+def clean_pid_file():
+    from os import remove
+    try:
+        remove(Paths.PID_FILE)
+    except FileNotFoundError:
+        pass
+
+# Returns the value from the PID file as an integer or None if the file doesn't exist
+def read_pid_file():
+    try:
+        with open(Paths.PID_FILE, "rb") as f:
+            PID = int(f.read().decode("UTF-8"))
+            f.close()
+            return PID
+    except FileNotFoundError:
+        return None
+    except ValueError:
+        clean_pid_file()
+        return None
+
+# Writes to the PID file and returns this scripts PID
+def write_pid_file():
+    from os import getpid
+    PID = getpid()
+    with open(Paths.PID_FILE, "wb") as f:
+        f.write(str(PID).encode("UTF-8"))
+        f.close()
+    return PID
+
+# Starts the program if the PID file is clean
+def start_program():
+
+    # Check that the PID file is clean
+    if read_pid_file() is not None:
+        print("Another instance of USBAuth is running.\nYou can stop USBAuth by running --stop")
+        exit()
+
+    # Start the listener
+    from listener import Listener
+    PID = write_pid_file()
+    print("USBAuth started with a PID of", PID, end=".\n")
+    l = Listener()
+    l.listen()
+
+# Stops the program and cleans the PID file
+def stop_program():
+
+    # Checks if an instance of USBAuth is running
+    PID = read_pid_file()
+    if PID is None:
+        print("USBAuth is not running.")
+        exit()
+
+    # Terminates the PID and cleans the PID file
+    try:
+        from os import kill
+        from signal import SIGTERM
+        kill(PID, SIGTERM)
+        clean_pid_file()
+        print("USBAuth terminated.")
+    except ProcessLookupError:
+        pass
+
+#
+# Methods for authentication
+#
+
+
+
+
+
+
+
+
+#
+# Script starts here
+#
+
+# Parse arguments passed from the CLI
+args = parse_args()
+
+# Ensure the user is running this with root privileges, otherwise exit
+if not check_for_root():
+    print("You need to run this with root privileges!")
+    exit()
+if args.start: start_program()
+elif args.stop: stop_program()
+elif args.authenticate: pass
+elif args.password: pass
+elif args.whitelist: pass

@@ -20,7 +20,6 @@ For any further information contact me at oliver@neven.dk
 from threading import Thread
 from logger import Logger
 from pyudev import Context, Monitor
-from sys import exit
 from paths import Paths
 from device import Device
 from device_manager import DeviceManager
@@ -51,7 +50,12 @@ class Listener:
 				connection_thread.start()
 		except KeyboardInterrupt:
 			LOGGER.log("Exited by user!")
-			exit(1)
+			from os import remove
+			try:
+				remove(Paths.PID_FILE)
+			except FileNotFoundError:
+				pass
+			exit()
 
 	# Sends a USB device to authentication if necessary
 	def connection(self, dev):

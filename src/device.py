@@ -70,27 +70,21 @@ class Device:
 
 	# Authenticates the device on system level, reguires root permissions!
 	def authenticate(self):
-		try:
-			if self.CONNECTED:
-				with open(self.PATH + Paths.AUTHORIZED_FILENAME, "wb") as f:
-					f.write("1".encode("UTF-8"))
-					f.close()
-					self.AUTHENTICATED = True
-					return True
-		except PermissionError:
-			return False
+		if self.CONNECTED:
+			with open(self.PATH + Paths.AUTHORIZED_FILENAME, "wb") as f:
+				f.write("1".encode("UTF-8"))
+				f.close()
+				self.AUTHENTICATED = True
+				return True
 
 	# Deauthenticates the device on system level, reguires root permissions!
 	def deauthenticate(self):
-		try:
-			if self.CONNECTED:
-				with open(self.PATH + Paths.AUTHORIZED_FILENAME, "wb") as f:
-					f.write("0".encode("UTF-8"))
-					f.close()
-					self.AUTHENTICATED = False
-					return True
-		except PermissionError:
-			return False
+		if self.CONNECTED:
+			with open(self.PATH + Paths.AUTHORIZED_FILENAME, "wb") as f:
+				f.write("0".encode("UTF-8"))
+				f.close()
+				self.AUTHENTICATED = False
+				return True
 
 	# Whitelists the device if the state is true, removes it from the whitelist if not
 	def update_whitelist(self, state):
