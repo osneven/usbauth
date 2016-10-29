@@ -78,12 +78,8 @@ class DeviceManager:
 		return None
 
 	# Returns a list of all the connected devices
-	# Is nonauthenticated is true, it only returns connected and nonauthenticated devies
-	def list_connected_devices(self, nonauthenticated=False):
-		nonauthenticated_devices = []
+	def list_connected_devices(self):
+		connected_devices = []
 		for device in self.DEVICES:
-			if device.is_connected():
-				if nonauthenticated and device.is_authenticated():
-					continue
-				nonauthenticated_devices.append(device)
-		return nonauthenticated_devices
+			if device.is_connected(): connected_devices.append(device)
+		return connected_devices

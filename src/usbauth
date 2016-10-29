@@ -26,22 +26,27 @@ from os import chdir
 
 # Returns true if the script is running with root privileges
 def check_for_root():
-    from os import geteuid
-    return geteuid() == 0
+	from os import geteuid
+	return geteuid() == 0
+
+# Prints an error and exits if the script is not running as root, if it is, do nothing
+def root_or_exit():
+	if not check_for_root():
+		print("You need to run this with root privileges!")
+		exit()
 
 # Handles argument parsing from the CLI
 def parse_args():
-    import argparse
-    parser = argparse.ArgumentParser(description="USBAuth, a USB device authentication tool")
-    group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument("--start", action="store_true", help="starts the program")
-    group.add_argument("--stop", action="store_true", help="stops the program, if it is running")
-    group.add_argument("-a", "--authenticate", type=int, help="prompts for authentication of a USB device with a chosen id")
-    group.add_argument("-l", "--list", action="store_true", help="shows a list of all the connected USB devices")
-    group.add_argument("-ln", "--list-nonauthenticated", action="store_true", help="shows a list of all the nonauthenticated connected USB devices")
-    group.add_argument("-p", "--password", action="store_true", help="prompts for a new authentication password")
-    group.add_argument("-w", "--whitelist", type=int, help="prompts for whitelisting of a USB device with a chosen id")
-    return parser.parse_args()
+	import argparse
+	parser = argparse.ArgumentParser(description="USBAuth, a USB device authentication tool")
+	parser.add_argument("--start", action="store_true", help="starts the program")
+	parser.add_argument("--stop", action="store_true", help="stops the program, if it is running")
+	parser.add_argument("-a", "--auth", type=int, help="prompts for authentication of a USB device with a chosen id")
+	parser.add_argument("-d", "--deauth", type=int, help="prompts for deauthentication of a USB device with a chosen id")
+	parser.add_argument("-l", "--list", action="store_true", help="shows a list of all the connected USB devices")
+	parser.add_argument("-p", "--password", action="store_true", help="prompts for a new authentication password")
+	parser.add_argument("-w", "--whitelist", type=int, help="prompts for whitelisting of a USB device with a chosen id")
+	return parser.parse_args()
 
 #
 # Methods for staring and stopping the program
@@ -49,103 +54,186 @@ def parse_args():
 
 # Removes the PID file
 def clean_pid_file():
-    from os import remove
-    try:
-        remove(Paths.PID_FILE)
-    except FileNotFoundError:
-        pass
+	from os import remove
+	try:
+		remove(Paths.PID_FILE)
+	except FileNotFoundError:
+		pass
 
 # Returns the value from the PID file as an integer or None if the file doesn't exist
 def read_pid_file():
-    try:
-        with open(Paths.PID_FILE, "rb") as f:
-            PID = int(f.read().decode("UTF-8"))
-            f.close()
-            return PID
-    except FileNotFoundError:
-        return None
-    except ValueError:
-        clean_pid_file()
-        return None
+	try:
+		with open(Paths.PID_FILE, "rb") as f:
+				PID = int(f.read().decode("UTF-8"))
+				f.close()
+				return PID
+	except FileNotFoundError:
+		return None
+	except ValueError:
+		clean_pid_file()
+		return None
 
 # Writes to the PID file and returns this scripts PID
 def write_pid_file():
-    from os import getpid
-    PID = getpid()
-    with open(Paths.PID_FILE, "wb") as f:
-        f.write(str(PID).encode("UTF-8"))
-        f.close()
-    return PID
+	from os import getpid
+	PID = getpid()
+	with open(Paths.PID_FILE, "wb") as f:
+		f.write(str(PID).encode("UTF-8"))
+		f.close()
+	return PID
 
 # Starts the program if the PID file is clean
 def start_program():
 
-    # Check that the PID file is clean
-    if read_pid_file() is not None:
-        print("Another instance of USBAuth is running.\nYou can stop USBAuth by running --stop")
-        exit()
+	# Check that the PID file is clean
+	if read_pid_file() is not None:
+		print("Another instance of USBAuth is running.\nYou can stop USBAuth by running --stop")
+		exit()
 
-    # Start the listener
-    from listener import Listener
-    PID = write_pid_file()
-    print("USBAuth started with a PID of", PID, end=".\n")
-    l = Listener()
-    l.listen()
+	# Start the listener
+	from listener import Listener
+	PID = write_pid_file()
+	print("USBAuth started with a PID of", PID, end=".\n")
+	l = Listener()
+	l.listen()
 
 # Stops the program and cleans the PID file
 def stop_program():
 
-    # Checks if an instance of USBAuth is running
-    PID = read_pid_file()
-    if PID is None:
-        print("USBAuth is not running.")
-        exit()
+	# Checks if an instance of USBAuth is running
+	PID = read_pid_file()
+	if PID is None:
+		print("USBAuth is not running.")
+		exit()
 
-    # Terminates the PID and cleans the PID file
-    try:
-        from os import kill
-        from signal import SIGTERM
-        kill(PID, SIGTERM)
-        clean_pid_file()
-        print("USBAuth terminated.")
-    except ProcessLookupError:
-        pass
+	# Terminates the PID and cleans the PID file
+	try:
+		from os import kill
+		from signal import SIGTERM
+		kill(PID, SIGTERM)
+		clean_pid_file()
+		print("USBAuth terminated.")
+	except ProcessLookupError:
+		pass
+
+#
+# Methods for prompting the user
+#
+
+# Prompts user for password and returns true if it matches the one stored on the disk, false if it does not
+def prompt_and_verify_password():
+	from password_manager import PasswordManager
+	from getpass import getpass
+	prompt = getpass("Enter your authentication password: ")
+	return PasswordManager(None).verify_password_hash(prompt)
+
+# Prompts the user for a yes or no answer and returns true if yes, and false is no
+# Prints a message on the same line as the answer
+#	Answers can be the following (case insensitive): yes, no, y, n
+def prompt_yes_or_no(msg):
+	answer = None
+	returns = {"yes": True, "y": True, "no": False, "n": False}
+	while not answer in returns:
+		answer = input(msg + " [Y/n]: ").lower()
+	return returns[answer]
+
+# Prompts user for entering a new password, and confirming that password
+# If the two entered passwords match, it returns them, if they did not, it returns None
+def prompt_for_new_password():
+	from getpass import getpass
+	new_password = getpass("Enter a new authentication password: ")
+	if new_password == getpass("Confirm the authentication password: "):
+		return new_password
+	else:
+		return None
 
 #
 # Methods for authentication
 #
 
-# Prompts for authentication
+# Prompts for and authenticates a USB device
 def authenticate(id):
-    from device_manager import DeviceManager
-    devices = DeviceManager().list_connected_devices(nonauthenticated=True)
-    if id in range(len(devices)):
-        from password_manager import PasswordManager
-        from getpass import getpass
-        device = devices[id]
-        print("Authentication undergoing on:\n" + device.get_description())
-        if PasswordManager(None).verify_password_hash(getpass("Enter authentication password:")):
-            device.authenticate()
-            print("Authentication success.")
-        else:
-            print("Authentication failure: Bad password.")
-    else:
-        print("No device with that ID.")
 
-#
-# Methods for listing USB devices
-#
+	# Check that a device with that ID exists
+	# If it does, then also check that it is not authenticated
+	from device_manager import DeviceManager
+	dm = DeviceManager()
+	devices = dm.list_connected_devices()
+	if not id in range(len(devices)):
+		print("No device with that ID.")
+		exit()
+	elif devices[id].is_authenticated():
+		print("That device is already authenticated.")
+		exit()
+
+	# Prompt for authentication (let user apply the authentication password)
+	try:
+		print("Authentication undergoing on:\n" + devices[id].get_description())
+		if prompt_and_verify_password():
+			devices[id].authenticate()
+			dm.dump_database_file()
+			print("Device successfully authenticated.")
+		else: print("Authentication failure: Bad password.")
+	except KeyboardInterrupt:
+		print("\nAuthentication failure: Exited by user.")
+
+# Prompts for and deauthenticates a USB device
+def deauthenticate(id):
+
+	# Check that a device with that ID exists
+	# If it does, then also check that it is not authenticated
+	from device_manager import DeviceManager
+	dm = DeviceManager()
+	devices = dm.list_connected_devices()
+	if not id in range(len(devices)):
+		print("No device with that ID.")
+		exit()
+	elif not devices[id].is_authenticated():
+		print("That device is not authenticated.")
+		exit()
+
+	# Prompt for deauthentication (let user apply with yes or no)
+	try:
+		print("Deauthentication undergoing on:\n" + devices[id].get_description())
+		if prompt_yes_or_no("Do you wish to deauthenticate this device?"):
+			devices[id].deauthenticate()
+			dm.dump_database_file()
+			print("Device successfully deauthenticated.")
+		else: print("Device remains authenticated.")
+	except KeyboardInterrupt:
+		print("\nDeauthentication failure: Exited by user.")
+
+# Prompts for and updates the USB authentication password
+def update_password():
+	print("Updating the USB device authentication password ...")
+	try:
+		# Prompt for and verify the current password
+		if prompt_and_verify_password():
+
+			# Prompt for and set a new password
+			new_password = prompt_for_new_password()
+			if new_password is not None:
+				from password_manager import PasswordManager
+				PasswordManager(None).update_password_hash(new_password)
+				print("Password successfully updated.")
+			else: print("Password updation failure: Passwords didn't match.")
+		else: print("Password updation failure: Bad passoword.")
+	except KeyboardInterrupt:
+		print("\nPassword updation failure: Exited by user.")
+
+# Prompts for and whitelists a USB device
+def whitelist(id):
+	pass
 
 # Prints a list of all the connected devices
-# Is nonauthenticated is true, it only prints connected and nonauthenticated devies
-def list_connected_devices(nonauthenticated):
-    from device_manager import DeviceManager
-    devices = DeviceManager().list_connected_devices(nonauthenticated=nonauthenticated)
-    if len(devices) > 0:
-        for i, device in enumerate(devices):
-            print("[" + str(i) + "]", device.to_name_string(), device.to_id_string() + ", authenticated:", device.is_authenticated())
-    else:
-        print("No devices to list.")
+def list_connected_devices():
+	from device_manager import DeviceManager
+	devices = DeviceManager().list_connected_devices()
+	if len(devices) > 0:
+		for i, device in enumerate(devices):
+				print("[" + str(i) + "]", device.to_name_string(), device.to_id_string() + ", authenticated:", device.is_authenticated())
+	else:
+		print("No devices to list.")
 
 #
 # Script starts here
@@ -153,15 +241,23 @@ def list_connected_devices(nonauthenticated):
 
 # Parse arguments passed from the CLI
 args = parse_args()
-
-# Ensure the user is running this with root privileges, otherwise exit
-if not check_for_root():
-    print("You need to run this with root privileges!")
-    exit()
-if args.start: start_program()
-elif args.stop: stop_program()
-elif args.authenticate is not None: authenticate(args.authenticate)
-elif args.password: pass
+if args.start:
+	root_or_exit()
+	start_program()
+elif args.stop:
+	root_or_exit()
+	stop_program()
+elif args.auth is not None:
+	root_or_exit()
+	authenticate(args.auth)
+elif args.deauth is not None:
+	root_or_exit()
+	deauthenticate(args.deauth)
+elif args.password:
+	root_or_exit()
+	update_password()
 elif args.whitelist: pass
-elif args.list: list_connected_devices(False)
-elif args.list_nonauthenticated: list_connected_devices(True)
+elif args.list:
+	root_or_exit()
+	list_connected_devices()
+else: print("Run 'usbauth --help' to see launch options.")
