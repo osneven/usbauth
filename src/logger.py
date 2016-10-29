@@ -22,19 +22,22 @@ from paths import Paths
 # This class is used to log feedback to stdout and a generated log file
 # Log files are contained within the logs directory, see paths.py
 class Logger:
+	QUIET = None
+	LOG_FILE = None
 
 	# Initializes an empty log file
-	def __init__(self):
-		global LOG_FILE
+	def __init__(self, quiet):
 		Paths.create_paths()
-		LOG_FILE = Paths.LOG_DIR + self.generate_log_name()
-		open(LOG_FILE, "wb").close() # Initialize empty file
+		self.LOG_FILE = Paths.LOG_DIR + self.generate_log_name()
+		open(self.LOG_FILE, "wb").close() # Initialize empty file
+		self.QUIET = quiet
 
 	# Logs a message to stdout and the log file
 	def log(self, message):
 		message = self.get_time_stamp() + ": " + message + "\n"
-		print(message, end="")
-		with open(LOG_FILE, "ab") as f:
+		if not self.QUIET:
+			print(message, end="")
+		with open(self.LOG_FILE, "ab") as f:
 			f.write(message.encode("UTF-8"))
 			f.close()
 

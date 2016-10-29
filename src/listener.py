@@ -28,9 +28,9 @@ from device_manager import DeviceManager
 class Listener:
 
 	# Initializes a logger
-	def __init__(self):
+	def __init__(self, quiet):
 		global LOGGER, MANAGER
-		LOGGER = Logger()
+		LOGGER = Logger(quiet)
 		MANAGER = DeviceManager()
 
 	# Starts listening for USB connections

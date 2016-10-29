@@ -46,6 +46,7 @@ def parse_args():
 	parser.add_argument("-l", "--list", action="store_true", help="shows a list of all the connected USB devices")
 	parser.add_argument("-p", "--password", action="store_true", help="prompts for a new authentication password")
 	parser.add_argument("-w", "--whitelist", type=int, help="prompts for whitelisting of a USB device with a chosen id")
+	parser.add_argument("-q", "--quiet", action="store_true", help="stops the program from printing any messages to the screen")
 	return parser.parse_args()
 
 #
@@ -83,7 +84,7 @@ def write_pid_file():
 	return PID
 
 # Starts the program if the PID file is clean
-def start_program():
+def start_program(quiet):
 
 	# Check that the PID file is clean
 	if read_pid_file() is not None:
@@ -94,7 +95,7 @@ def start_program():
 	from listener import Listener
 	PID = write_pid_file()
 	print("USBAuth started with a PID of", PID, end=".\n")
-	l = Listener()
+	l = Listener(quiet)
 	l.listen()
 
 # Stops the program and cleans the PID file
@@ -243,7 +244,7 @@ def list_connected_devices():
 args = parse_args()
 if args.start:
 	root_or_exit()
-	start_program()
+	start_program(args.quiet)
 elif args.stop:
 	root_or_exit()
 	stop_program()
