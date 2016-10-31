@@ -205,20 +205,17 @@ def deauthenticate(id):
 		print("\nDeauthentication failure: Exited by user.")
 
 # Prompts for and updates the USB authentication password
+# No need for entering the old authentication password, read the README for more info.
 def update_password():
 	print("Updating the USB device authentication password ...")
 	try:
-		# Prompt for and verify the current password
-		if prompt_and_verify_password():
-
-			# Prompt for and set a new password
-			new_password = prompt_for_new_password()
-			if new_password is not None:
-				from password_manager import PasswordManager
-				PasswordManager(None).update_password_hash(new_password)
-				print("Password successfully updated.")
-			else: print("Password updation failure: Passwords didn't match.")
-		else: print("Password updation failure: Bad passoword.")
+		# Prompt for and set a new password
+		new_password = prompt_for_new_password()
+		if new_password is not None:
+			from password_manager import PasswordManager
+			PasswordManager(None).update_password_hash(new_password)
+			print("Password successfully updated.")
+		else: print("Password updation failure: Passwords didn't match.")
 	except KeyboardInterrupt:
 		print("\nPassword updation failure: Exited by user.")
 
