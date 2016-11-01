@@ -31,20 +31,23 @@ class DeviceManager:
 
 	# Add a device to the database and deauthenticates it
 	def add_device(self, device):
-		# Removes any matching device
+		# Remove the device if it's already in the list
 		for i in range(len(self.DEVICES)):
 			if self.DEVICES[i].get_hash() == device.get_hash():
 				del self.DEVICES[i]
 				break
 
-		# Adds the device
-		device.deauthenticate()
+		# Deauthenticate the device if it's not whitelisted
+		if not device.is_whitelisted(): device.deauthenticate()
+		else: device.authenticate()
+
+		# Add the device
 		self.DEVICES.append(device)
 
 	# States a device as not connected, leaves it in the DEVICES list
 	# NOTE: This also sets the device's PATH to "Removed"
 	def remove_device(self, device):
-		# Looks for the matching device in the list
+		# Look for the matching device in the list
 		for i in range(len(self.DEVICES)):
 			if self.DEVICES[i].get_hash() == device.get_hash(): # Match found
 				self.DEVICES[i].set_connected(False) 			# State is as "not connected"

@@ -148,6 +148,34 @@ def prompt_for_new_password():
 	else:
 		return None
 
+# Prompts user for entering a timespan
+# Prints a message on the same line as the answer
+#	For timespan syntax look at the README file
+# Returns in the following syntax (timespan integer, unit integer)
+def prompt_time(msg):
+	answer = input(msg)
+
+	# Check if 'forever' was chosen
+	if anser == "0":
+		return (0, 0)
+
+	# Translate the answer into a timespan integer and unit code integer
+	unit_translate = {"s": 0, "m": 1, "h": 2} # Unit codes
+	if len(answer) > 0:
+
+		# Translate the unit code
+		unit_symbol = a[-1:].lower() # The unit sybol should always be the last character in the answer
+		if not unit_symbol in unit_translate:
+			print("Timespan syntax error:", "'" + unit_symbol + "'", "can't be interpreted as an unit symbol.")
+		unit_code = unit_translate[unit_symbol]
+
+		# Translate the timepan
+		try:
+			timespan = int(a[:-1]) # The rest of the answer should be an integer value
+		except ValueError:
+			print("Timespan syntax error:", "'" + a[:-1] + "'", "can't be interpreted as an integer.")
+	return (timespan, unit_code)
+
 #
 # Methods for authentication
 #
@@ -156,7 +184,7 @@ def prompt_for_new_password():
 def authenticate(id):
 
 	# Check that a device with that ID exists
-	# If it does, then also check that it is not authenticated
+	# If it does, then also check that it's not authenticated
 	from device_manager import DeviceManager
 	dm = DeviceManager()
 	devices = dm.list_connected_devices()
@@ -182,7 +210,7 @@ def authenticate(id):
 def deauthenticate(id):
 
 	# Check that a device with that ID exists
-	# If it does, then also check that it is not authenticated
+	# If it does, then also check that it's authenticated
 	from device_manager import DeviceManager
 	dm = DeviceManager()
 	devices = dm.list_connected_devices()
@@ -221,7 +249,31 @@ def update_password():
 
 # Prompts for and whitelists a USB device
 def whitelist(id):
-	pass
+
+	# Check that a device with that ID exists
+	# If it does, then also check that it is authenticated and not whitlisted
+	from device_manager import DeviceManager
+	dm = DeviceManager()
+	devices = dm.list_connected_devices()
+	if not id in range(len(devices)):
+		print("No device with that ID.")
+		exit()
+	elif not devices[id].is_authenticated():
+		print("That device is not authenticated, and can therefore not be added to the white list.")
+		exit()
+	elif not devices[id].is_whitelisted():
+		print("That device is already whitelisted.")
+		exit()
+
+	# Prompt for whitelisting
+	try:
+		print("Whitelisting undergoing on:\n" + devices[id].get_description())
+		if prompt_yes_or_no("Do you wish to whitelist this device?"):
+			timespan, unit_code = prompt_time("For how long do you wish to whitelist the device? (e.g. '30s', '10m', '2h' or '0' represents forever): ")
+			devices[id].update_whitelist(timespan=timepan, unit=unit_code)
+	except KeyboardInterrupt:
+		print("\nWhitelisting failure: Exited by user.")
+
 
 # Prints a list of all the connected devices
 def list_connected_devices():

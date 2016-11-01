@@ -31,8 +31,8 @@ class Device:
 	PRODUCT_ID = None
 	SERIAL = None
 	HASH = None
-	AUTHENTICATED = None
 	WHITELISTED = False
+	TIMEOUT_DATE = None
 
 	# Initializes the USB device using the root of its path and gathers information about it, and saves it all as bytes like objects
 	def __init__(self, device_path):
@@ -74,7 +74,6 @@ class Device:
 			with open(self.PATH + Paths.AUTHORIZED_FILENAME, "wb") as f:
 				f.write("1".encode("UTF-8"))
 				f.close()
-				self.AUTHENTICATED = True
 
 	# Deauthenticates the device on system level, reguires root permissions!
 	def deauthenticate(self):
@@ -82,11 +81,24 @@ class Device:
 			with open(self.PATH + Paths.AUTHORIZED_FILENAME, "wb") as f:
 				f.write("0".encode("UTF-8"))
 				f.close()
-				self.AUTHENTICATED = False
 
 	# Whitelists the device if the state is true, removes it from the whitelist if not
-	def update_whitelist(self, state):
+	# Optionally set a timespan value for the whitelist to timeout after that amout of time.
+	# Also, set the unit when choosing a timespan, 0 for seconds, 1 for minutes and 2 for hours.
+	def update_whitelist(self, state, timespan=None, unit=1):
 		self.WHITELISTED = state
+
+		# Set timeout date
+		if timespan is not None and unit in list(range(3)):
+			from datetime import datetime, timedelta
+
+			# Get current date
+			now_date = datetime.now()
+
+			# Add the timespan in units to the current date
+			if unit == 0: self.TIMEOUT_DATE = now_date + timedelta(seconds=timespan)
+			elif unit == 0: self.TIMEOUT_DATE = now_date + timedelta(minutes=timespan)
+			elif unit == 0: self.TIMEOUT_DATE = now_date + timedelta(days=timespan)
 
 	# Some getters for the device's information
 	def get_path(self):
@@ -107,9 +119,19 @@ class Device:
 		from binascii import hexlify
 		return hexlify(self.HASH).decode("ASCII")
 	def is_whitelisted(self):
+		# Check if a timeout date is set
+		if self.TIMEOUT_DATE is not None:
+			# Return whether the timeout date is in the future or not
+			from datetime import datetime
+			return self.TIMEOUT_DATE < datetime.now()
+		# No timeout date, just return the value
 		return self.WHITELISTED
 	def is_authenticated(self):
-		return self.AUTHENTICATED
+		# Read the "authorized" file and check if the USB device is authenticated
+		with open(self.PATH + Paths.AUTHORIZED_FILENAME, "rb") as f:
+			authenticated = (f.read().decode("UTF-8") == "1")
+			f.close()
+		return authenticated
 	def is_connected(self):
 		return self.CONNECTED
 	def set_connected(self, state, path="Removed"):
@@ -126,6 +148,7 @@ class Device:
 	def get_description(self):
 		desc = self.to_name_string() + " " + self.to_id_string() + "\n"
 		desc += "Serial:\t" + self.get_serial().decode("UTF-8").strip() + "\n"
-		desc += "Hash:\t" + self.get_hash_as_hex() + "\n"
 		desc += "Path:\t" + self.get_path() + "\n"
+		desc += "Hash:\t" + self.get_hash_as_hex() + "\n"
+		
 		return desc
