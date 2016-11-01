@@ -68,7 +68,7 @@ If your continuously inserting and removing the same USB device, and don't want 
 ```
 *Replace `ID` with your selected ID.*
 
-This will white list the USB device with the selected ID, or remove it from the white list, if it was already on it. But before it will do anything, it will prompt for a yes or no confirmation. There is no need the for the authentication password, since the device would already have been authenticated first. When choosing to authenticate the USB device, you will also be prompted for a timeout value. If you wish for the white listing to last on till its removed from the white list, simple type in a value of `0`. Otherwise type in any timespan presided by the unit's symbol. The unit can either be seconds (s), minutes (m) or hours (h). As an example, this value should be `10m` for a white list of ten minutes.
+This will white list the USB device with the selected ID, but before it will do anything, it will prompt for a yes or no confirmation. There is no need the for the authentication password, since the device would already have been authenticated first. When choosing to authenticate the USB device, you will also be prompted for a timeout value. If you wish for the white listing to last on till its removed from the white list, simple type in a value of `0`. Otherwise type in any timespan presided by the unit's symbol. The unit can either be seconds (s), minutes (m) or hours (h). As an example, this value should be `10m` for a white list of ten minutes.
 
 ### Password updation
 The authentication password is selected on install, but if you wish to change the password later use this command:

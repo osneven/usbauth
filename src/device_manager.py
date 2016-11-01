@@ -24,22 +24,29 @@ from paths import Paths
 #	password verification for USB device authentication, and
 #	storing data about all USB devices it handles.
 class DeviceManager:
-	DEVICES = []
-
 	def __init__(self):
-		self.DEVICES = self.load_database_file()
+		self.load_database_file()
 
 	# Add a device to the database and deauthenticates it
 	def add_device(self, device):
-		# Remove the device if it's already in the list
+		self.load_database_file()
+
+		# Merge the attributes of the device if it's already in the list
 		for i in range(len(self.DEVICES)):
 			if self.DEVICES[i].get_hash() == device.get_hash():
+				# Merge the devices
+				new_path = device.get_path()			# Save the path
+				device.__dict__ = {**device.__dict__, **self.DEVICES[i].__dict__}	# Merge the device with the one in the list
+				device.PATH = new_path
+				device.set_connected(True)
+
+				# Remove the original
 				del self.DEVICES[i]
 				break
 
 		# Deauthenticate the device if it's not whitelisted
-		if not device.is_whitelisted(): device.deauthenticate()
-		else: device.authenticate()
+		if device.is_whitelisted(): device.authenticate()
+		else: device.deauthenticate()
 
 		# Add the device
 		self.DEVICES.append(device)
@@ -47,6 +54,8 @@ class DeviceManager:
 	# States a device as not connected, leaves it in the DEVICES list
 	# NOTE: This also sets the device's PATH to "Removed"
 	def remove_device(self, device):
+		self.load_database_file()
+
 		# Look for the matching device in the list
 		for i in range(len(self.DEVICES)):
 			if self.DEVICES[i].get_hash() == device.get_hash(): # Match found
@@ -56,18 +65,19 @@ class DeviceManager:
 	# States all connected devices as non connected, leaves it in the DEVICES list
 	# NOTE: This also sets the device's PATH to "Removed"
 	def remove_all_devices(self):
+		self.load_database_file()
 		for device in self.DEVICES:
 			if device.is_connected():
 				device.set_connected(False)
 
-	# Load and return data stored in the database file
+	# Loads data stored in the database file and stores it in DEVICES
 	def load_database_file(self):
 		Paths.create_paths()
 		try:
-			return pickle.load(open(Paths.DATABASE_FILE, "rb"))
+			self.DEVICES = pickle.load(open(Paths.DATABASE_FILE, "rb"))
 		except FileNotFoundError: # Create an empty database file if non exists
 			pickle.dump([], open(Paths.DATABASE_FILE, "wb"))
-			return self.load_database_file()
+			self.load_database_file()
 
 	# Dump the devices into the database file
 	def dump_database_file(self):

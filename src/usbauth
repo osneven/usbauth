@@ -156,7 +156,7 @@ def prompt_time(msg):
 	answer = input(msg)
 
 	# Check if 'forever' was chosen
-	if anser == "0":
+	if answer == "0":
 		return (0, 0)
 
 	# Translate the answer into a timespan integer and unit code integer
@@ -164,16 +164,18 @@ def prompt_time(msg):
 	if len(answer) > 0:
 
 		# Translate the unit code
-		unit_symbol = a[-1:].lower() # The unit sybol should always be the last character in the answer
+		unit_symbol = answer[-1:].lower() # The unit sybol should always be the last character in the answer
 		if not unit_symbol in unit_translate:
 			print("Timespan syntax error:", "'" + unit_symbol + "'", "can't be interpreted as an unit symbol.")
+			exit()
 		unit_code = unit_translate[unit_symbol]
 
 		# Translate the timepan
 		try:
-			timespan = int(a[:-1]) # The rest of the answer should be an integer value
+			timespan = int(answer[:-1]) # The rest of the answer should be an integer value
 		except ValueError:
-			print("Timespan syntax error:", "'" + a[:-1] + "'", "can't be interpreted as an integer.")
+			print("Timespan syntax error:", "'" + answer[:-1] + "'", "can't be interpreted as an integer.")
+			exit()
 	return (timespan, unit_code)
 
 #
@@ -226,6 +228,7 @@ def deauthenticate(id):
 		print("Deauthentication undergoing on:\n" + devices[id].get_description())
 		if prompt_yes_or_no("Do you wish to deauthenticate this device?"):
 			devices[id].deauthenticate()
+			devices[id].update_whitelist(False)
 			dm.dump_database_file()
 			print("Device successfully deauthenticated.")
 		else: print("Device remains authenticated.")
@@ -261,7 +264,7 @@ def whitelist(id):
 	elif not devices[id].is_authenticated():
 		print("That device is not authenticated, and can therefore not be added to the white list.")
 		exit()
-	elif not devices[id].is_whitelisted():
+	elif devices[id].is_whitelisted():
 		print("That device is already whitelisted.")
 		exit()
 
@@ -269,11 +272,19 @@ def whitelist(id):
 	try:
 		print("Whitelisting undergoing on:\n" + devices[id].get_description())
 		if prompt_yes_or_no("Do you wish to whitelist this device?"):
-			timespan, unit_code = prompt_time("For how long do you wish to whitelist the device? (e.g. '30s', '10m', '2h' or '0' represents forever): ")
-			devices[id].update_whitelist(timespan=timepan, unit=unit_code)
+
+			# Prompt for timespan
+			timespan, unit_code = prompt_time("For how long do you wish to whitelist the device? (e.g. '30s', '10m', '2h' or '0' that represents forever): ")
+
+			# Update the whitlisting state
+			if timespan is 0: devices[id].update_whitelist(True)
+			else: devices[id].update_whitelist(True, timespan=timespan, unit=unit_code)
+			dm.dump_database_file()
+
+			print("Device successfully whitelisted untill", devices[id].get_timeout_date_str() + ".")
+
 	except KeyboardInterrupt:
 		print("\nWhitelisting failure: Exited by user.")
-
 
 # Prints a list of all the connected devices
 def list_connected_devices():
@@ -281,7 +292,13 @@ def list_connected_devices():
 	devices = DeviceManager().list_connected_devices()
 	if len(devices) > 0:
 		for i, device in enumerate(devices):
-				print("[" + str(i) + "]", device.to_name_string(), device.to_id_string() + ", authenticated:", device.is_authenticated())
+			msg = "[" + str(i) + "] " + device.to_name_string() + " " + device.to_id_string() + ", "
+			if device.is_authenticated():
+				if device.is_whitelisted():
+					msg += "authenticated, whitelisted untill " + device.get_timeout_date_str() + "."
+				else: msg += "authenticated."
+			else: msg += "not authenticated."
+			print(msg)
 	else:
 		print("No devices to list.")
 
@@ -306,7 +323,9 @@ elif args.deauth is not None:
 elif args.password:
 	root_or_exit()
 	update_password()
-elif args.whitelist: pass
+elif args.whitelist is not None:
+	root_or_exit()
+	whitelist(args.whitelist)
 elif args.list:
 	root_or_exit()
 	list_connected_devices()

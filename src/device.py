@@ -23,19 +23,17 @@ from paths import Paths
 
 # A class containg different information about a connected USB device and handles authentication on the system level
 class Device:
-	PATH = None
-	CONNECTED = None
-	VENDOR = None
-	VENDOR_ID = None
-	PRODUCT	= None
-	PRODUCT_ID = None
-	SERIAL = None
-	HASH = None
-	WHITELISTED = False
-	TIMEOUT_DATE = None
 
 	# Initializes the USB device using the root of its path and gathers information about it, and saves it all as bytes like objects
 	def __init__(self, device_path):
+		self.VENDOR = None
+		self.VENDOR_ID = None
+		self.PRODUCT	= None
+		self.PRODUCT_ID = None
+		self.SERIAL = None
+		self.HASH = None
+		self.WHITELISTED = False
+		self.TIMEOUT_DATE = None
 		self.PATH = device_path
 		self.CONNECTED = True
 		self.read_device_information()
@@ -58,7 +56,7 @@ class Device:
 		# Set the information variables
 		self.VENDOR		= information[0]
 		self.VENDOR_ID	= information[1]
-		self.PRODUCT		= information[2]
+		self.PRODUCT	= information[2]
 		self.PRODUCT_ID	= information[3]
 		self.SERIAL		= information[4]
 
@@ -85,7 +83,7 @@ class Device:
 	# Whitelists the device if the state is true, removes it from the whitelist if not
 	# Optionally set a timespan value for the whitelist to timeout after that amout of time.
 	# Also, set the unit when choosing a timespan, 0 for seconds, 1 for minutes and 2 for hours.
-	def update_whitelist(self, state, timespan=None, unit=1):
+	def update_whitelist(self, state, timespan=None, unit=None):
 		self.WHITELISTED = state
 
 		# Set timeout date
@@ -97,46 +95,68 @@ class Device:
 
 			# Add the timespan in units to the current date
 			if unit == 0: self.TIMEOUT_DATE = now_date + timedelta(seconds=timespan)
-			elif unit == 0: self.TIMEOUT_DATE = now_date + timedelta(minutes=timespan)
-			elif unit == 0: self.TIMEOUT_DATE = now_date + timedelta(days=timespan)
+			elif unit == 1: self.TIMEOUT_DATE = now_date + timedelta(minutes=timespan)
+			elif unit == 2: self.TIMEOUT_DATE = now_date + timedelta(hours=timespan)
+
+		# Set timout date to none if whitelisted is False
+		if not self.WHITELISTED and self.TIMEOUT_DATE is not None:
+			self.TIMEOUT_DATE = None
 
 	# Some getters for the device's information
 	def get_path(self):
 		return self.PATH
+
 	def get_vendor(self):
 		return self.VENDOR
+
 	def get_vendor_id(self):
 		return self.VENDOR_ID
+
 	def get_product(self):
 		return self.PRODUCT
+
 	def get_product_id(self):
 		return self.PRODUCT_ID
+
 	def get_serial(self):
 		return self.SERIAL
+
 	def get_hash(self):
 		return self.HASH
+
 	def get_hash_as_hex(self):
 		from binascii import hexlify
 		return hexlify(self.HASH).decode("ASCII")
+
 	def is_whitelisted(self):
+
 		# Check if a timeout date is set
 		if self.TIMEOUT_DATE is not None:
 			# Return whether the timeout date is in the future or not
 			from datetime import datetime
-			return self.TIMEOUT_DATE < datetime.now()
+			return self.TIMEOUT_DATE > datetime.now()
 		# No timeout date, just return the value
 		return self.WHITELISTED
+
+	def get_timeout_date_str(self):
+		if self.WHITELISTED:
+			if self.TIMEOUT_DATE is None:
+				return "removed from the whitelist"
+			else:
+				return self.TIMEOUT_DATE.strftime("%d/%m/%Y %I:%M:%S %p")
+		return None
 	def is_authenticated(self):
 		# Read the "authorized" file and check if the USB device is authenticated
 		with open(self.PATH + Paths.AUTHORIZED_FILENAME, "rb") as f:
-			authenticated = (f.read().decode("UTF-8") == "1")
+			authenticated = (f.read().decode("UTF-8").strip() == "1")
 			f.close()
 		return authenticated
 	def is_connected(self):
 		return self.CONNECTED
 	def set_connected(self, state, path="Removed"):
 		self.CONNECTED = state
-		self.PATH = path
+		if not state:
+			self.PATH = path
 
 	# Returns a string containing the vendor and then product name
 	def to_name_string(self):
@@ -149,6 +169,10 @@ class Device:
 		desc = self.to_name_string() + " " + self.to_id_string() + "\n"
 		desc += "Serial:\t" + self.get_serial().decode("UTF-8").strip() + "\n"
 		desc += "Path:\t" + self.get_path() + "\n"
-		desc += "Hash:\t" + self.get_hash_as_hex() + "\n"
-		
+		H = self.get_hash_as_hex()
+		desc += "Hash:\t" + H[:4] + "..." + H[-4:] + "\n"
+		timeout_str = self.get_timeout_date_str()
+		if timeout_str is not None:
+			desc += "Whitelisted untill: " + timeout_str + "\n"
+
 		return desc
