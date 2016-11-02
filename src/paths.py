@@ -33,7 +33,7 @@ class Paths:
 	AUTHORIZED_FILENAME	= "authorized"					# The file name, needs to be prefixed by the root of a device path, of the system file that authenticates a device.
 	VENDOR_FILENAME		= "manufacturer"				# Same as above, but with the vendor name.
 	VENDOR_ID_FILENAME	= "idVendor"					# Same as above, but with the vendor ID.
-	PRODCUT_FILENAME	= "product"						# Same as above, but with the product name.
+	PRODUCT_FILENAME	= "product"						# Same as above, but with the product name.
 	PRODUCT_ID_FILENAME	= "idProduct"					# Same as above, but with the product ID.
 	SERIAL_FILENAME		= "serial"						# Same as above, but with the serial number.
 

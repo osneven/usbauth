@@ -64,7 +64,7 @@ set_password() {
 	while true; do
 		echo "Enter a new authentication password:"
 		read -s password
-		echo "Verify the authentication password:"
+		echo "Confirm the authentication password:"
 		read -s verify
 		if [[ $password != $verify ]]; then
 			echo "[-] The passwords did not match, try agian."
