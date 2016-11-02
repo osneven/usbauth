@@ -45,6 +45,7 @@ class Device:
 
 		# Pre-define the need files, all of them needs to be prefixed by the root of the device's path
 		information_files = ["manufacturer", "idVendor", "product", "idProduct", "serial"]
+		information_files = [Paths.VENDOR_FILENAME, Paths.VENDOR_ID_FILENAME, Paths.PRODUCT_FILENAME, Paths.PRODUCT_ID_FILENAME, Paths.SERIAL]
 		information = []
 
 		# Read the files

@@ -23,18 +23,24 @@ from os import makedirs
 # Some global paths needed in various circumstances
 class Paths:
 	INSTALL_DIR 		= "/opt/usbauth/"				# Directory where the program source files is located.
+	TMP_DIR				= "/tmp/usbauth/"				# Where to store temporary files
 	CONFIG_DIR			= INSTALL_DIR + "config/"		# Directory where the program files that are not source files are located.
 	PASSWORD_FILE		= CONFIG_DIR + "passwd"			# SHA512 encrypted password byte file.
 	DATABASE_FILE		= CONFIG_DIR + "database.db"	# AES256 encrypted pickle file.
-	PID_FILE			= CONFIG_DIR + "pid"			# File containing pid of running process, if any.
+	PID_FILE			= TMP_DIR + "pid"				# File containing the PID of running process, if any.
 	LOG_DIR 			= INSTALL_DIR + "logs/"			# Directory where logs are stored.
 	BUS_DIR				= "/sys/bus/usb/devices/"		# Directory where USB devices "connect".
 	AUTHORIZED_FILENAME	= "authorized"					# The file name, needs to be prefixed by the root of a device path, of the system file that authenticates a device.
+	VENDOR_FILENAME		= "manufacturer"				# Same as above, but with the vendor name.
+	VENDOR_ID_FILENAME	= "idVendor"					# Same as above, but with the vendor ID.
+	PRODCUT_FILENAME	= "product"						# Same as above, but with the product name.
+	PRODUCT_ID_FILENAME	= "idProduct"					# Same as above, but with the product ID.
+	SERIAL_FILENAME		= "serial"						# Same as above, but with the serial number.
 
-	# Check if all paths above exists, if not, create them
+	# Check if all directories above exists, if not, create them
 	@staticmethod
 	def create_paths():
-		directories = [Paths.INSTALL_DIR, Paths.CONFIG_DIR, Paths.LOG_DIR]
+		directories = [Paths.TMP_DIR, Paths.INSTALL_DIR, Paths.CONFIG_DIR, Paths.LOG_DIR]
 		for directory in directories:
 			if not exists(directory):
 				makedirs(directory)
