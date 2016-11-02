@@ -65,14 +65,6 @@ class DeviceManager:
 				self.DEVICES[i].set_connected(False) 			# State is as "not connected"
 				break
 
-	# States all connected devices as non connected, leaves it in the DEVICES list
-	# NOTE: This also sets the device's PATH to "Removed"
-	def remove_all_devices(self):
-		self.load_database_file()
-		for device in self.DEVICES:
-			if device.is_connected():
-				device.set_connected(False)
-
 	# Loads data stored in the database file and stores it in DEVICES
 	def load_database_file(self):
 		Paths.create_paths()

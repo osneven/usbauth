@@ -17,15 +17,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 For any further information contact me at oliver@neven.dk
 '''
-from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives import hashes
+from crypto import PasswordHandler, SaltHandler
 from paths import Paths
 
-# A class used for updating and reading the password used for all USB device authentications
+# This class is for reading and writing the password to the disk
+# This is class is not used for encrypting the password.
 class PasswordManager:
 	def __init__(self, logger):
-		global LOGGER
-		LOGGER = logger
+		self.LOGGER = logger
 
 	# Reads the password hash from the disk
 	def read_password_hash(self):
@@ -36,26 +35,40 @@ class PasswordManager:
 				f.close()
 				return password_hash
 		except FileNotFoundError:
-			if LOGGER is not None:
-				LOGGER.log("Password file doesn't exist")
+			if self.LOGGER is not None:
+				self.LOGGER.log("Password file doesn't exist")
 			return None
 
 	# Updates the password hash on the disk with a given cleartext password
 	def update_password_hash(self, cleartext_password):
-		digest = hashes.Hash(hashes.SHA512(), backend=default_backend())
-		digest.update(cleartext_password.encode("UTF-8"))
+
+		# Generate the hash
+		salt_handler = SaltHandler()
+		password_handler = PasswordHandler(salt_handler, cleartext_password)
+		key = password_handler.generate()
+
+		# Write the hash to the file
 		Paths.create_paths()
 		with open(Paths.PASSWORD_FILE, "wb") as f:
-			f.write(digest.finalize())
+			f.write(key)
 			f.close()
-		if LOGGER is not None:
-			LOGGER.log("Password was updated")
+
+		# Log feedback
+		if self.LOGGER is not None:
+			self.LOGGER.log("Password was updated")
 
 	# Returns true if the given cleartext password equals the ciphertext password stored on the disk
 	def verify_password_hash(self, cleartext_password):
-		digest = hashes.Hash(hashes.SHA512(), backend=default_backend())
-		digest.update(cleartext_password.encode("UTF-8"))
+
+		# Read the hash from the file
 		with open(Paths.PASSWORD_FILE, "rb") as f:
-			match = f.read() == digest.finalize()
+			key = f.read()
 			f.close()
-			return match
+
+		# Match the password's hash and hash in the file
+		salt_handler = SaltHandler()
+		password_handler = PasswordHandler(salt_handler, cleartext_password)
+		match = password_handler.verify(key)
+
+		# Return resutl
+		return match

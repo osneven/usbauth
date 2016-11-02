@@ -25,7 +25,10 @@ class SaltHandler:
 		salt = self.load_salt()
 		if salt is None:
 			salt = self.generate_salt()
-		self.SALT = salt
+			self.SALT = salt
+			self.dump_salt()
+		else: self.SALT = salt
+
 
 	# Generates and returns a salt
 	def generate_salt(self):
@@ -42,6 +45,21 @@ class SaltHandler:
 		except FileNotFoundError:
 			return None
 
+	# Writes the salt to the salt file
+	def dump_salt(self):
+		Paths.create_paths()
+		with open(Paths.SALT_FILE, "wb") as f:
+			f.write(self.SALT)
+			f.close()
+
+	# Deletes the salt file
+	def delete_salt(self):
+		from os import remove
+		try:
+			remove(Paths.SALT_FILE)
+		except FileNotFoundError:
+			pass
+
 	# Simply returns the salt
 	def get_salt(self):
 		return self.SALT
@@ -49,11 +67,12 @@ class SaltHandler:
 # This class is for encrypting and verifying passwords
 class PasswordHandler:
 
-	# Initializes this object using a salt handler as a SaltHandler object
-	def __init__(self, salt_handler):
+	# Initializes this object using a salt handler as a SaltHandler object and a cleartext password string
+	def __init__(self, salt_handler, cleartext_password):
 		from cryptography.hazmat.backends import default_backend
 		self.BACKEND = default_backend()
 		self.SALT_HANDLER = salt_handler
+		self.CLEARTEXT_PASSWORD_BYTES = cleartext_password.encode("UTF-8")
 
 	# Initialize and return a new KDF as they can only be used once.
 	def init_kdf(self):
@@ -68,15 +87,24 @@ class PasswordHandler:
 			)
 
 	# Returns the hashed scrypt result of the cleartext password
-	def generate(self, cleartext_password):
-		return self.init_kdf().derive(cleartext_password.encode("UTF-8"))
+	def generate(self):
+		return self.init_kdf().derive(self.CLEARTEXT_PASSWORD_BYTES)
 
 	# Matches, and returns the result, a cleartext password and a hashed password
 	# The hashed password needs to be created using the above KDF
-	def verify(self, cleartext_password, hashed_password):
+	def verify(self, hashed_password):
 		from cryptography.exceptions import InvalidKey
 		try:
-			self.init_kdf().verify(cleartext_password.encode("UTF-8"), hashed_password)
+			self.init_kdf().verify(self.CLEARTEXT_PASSWORD_BYTES, hashed_password)
 			return True
 		except InvalidKey:
 			return False
+
+# This class is used for encrypting and decrypting the database file
+class DatabaseHandler:
+
+	def encrypt_bytes(self, bytes_to_encrypt):
+		pass
+
+	def decrypt_bytes(self, bytes_to_decrypt):
+		pass
