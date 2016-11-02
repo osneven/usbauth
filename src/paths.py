@@ -24,12 +24,13 @@ from os import makedirs
 class Paths:
 	INSTALL_DIR 		= "/opt/usbauth/"				# Directory where the program source files is located.
 	TMP_DIR				= "/tmp/usbauth/"				# Where to store temporary files, should be cleared everytime the process is terminated.
+	VAR_DIR				= "/var/usbauth/"				# Where to store files for longer periods.
 	CONFIG_DIR			= INSTALL_DIR + "config/"		# Directory where the program files that are not source files are located.
 	PASSWORD_FILE		= CONFIG_DIR + "passwd"			# SHA512 hash of the password.
 	DATABASE_FILE		= CONFIG_DIR + "database.db"	# AES256 encrypted pickle file.
 	PID_FILE			= TMP_DIR + "pid"				# File containing the PID of the running process, if any.
 	LOG_PATHNAME_FILE	= TMP_DIR + "logfile_name"		# File containing the log's file name of the running process, if any.
-	LOG_DIR 			= INSTALL_DIR + "logs/"			# Directory where logs are stored.
+	LOG_DIR 			= VAR_DIR + "logs/"				# Directory where logs are stored.
 	BUS_DIR				= "/sys/bus/usb/devices/"		# Directory where USB devices "connect".
 	AUTHORIZED_FILENAME	= "authorized"					# The file name, needs to be prefixed by the root of a device path, of the system file that authenticates a device.
 	VENDOR_FILENAME		= "manufacturer"				# Same as above, but with the vendor name.
