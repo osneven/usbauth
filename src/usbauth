@@ -22,7 +22,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 For any further information contact me at oliver@neven.dk
 '''
 from paths import Paths
-from os import chdir
 
 # Returns true if the script is running with root privileges
 def check_for_root():
@@ -64,14 +63,12 @@ def clean_pid_file():
 # Returns the value from the PID file as an integer or None if the file doesn't exist
 def read_pid_file():
 	try:
+		Paths.create_paths()
 		with open(Paths.PID_FILE, "rb") as f:
 				PID = int(f.read().decode("UTF-8"))
 				f.close()
 				return PID
-	except FileNotFoundError:
-		return None
-	except ValueError:
-		clean_pid_file()
+	except:
 		return None
 
 # Writes to the PID file and returns this scripts PID
@@ -92,9 +89,11 @@ def start_program(quiet):
 		exit()
 
 	# Start the listener
-	from listener import Listener
+	Paths.delete_tmp_dir()
+	Paths.create_paths()
 	PID = write_pid_file()
 	print("USBAuth started with a PID of", PID, end=".\n")
+	from listener import Listener
 	l = Listener(quiet)
 	l.listen()
 
@@ -112,10 +111,10 @@ def stop_program():
 		from os import kill
 		from signal import SIGTERM
 		kill(PID, SIGTERM)
-		clean_pid_file()
 		print("USBAuth terminated.")
 	except ProcessLookupError:
 		pass
+	Paths.delete_tmp_dir()
 
 #
 # Methods for prompting the user
@@ -203,8 +202,11 @@ def authenticate(id):
 		if prompt_and_verify_password():
 			devices[id].authenticate()
 			dm.dump_database_file()
+			LOGGER.log("Authentication of " + devices[id].to_name_string() + " " + devices[id].to_id_string())
 			print("Device successfully authenticated.")
-		else: print("Authentication failure: Bad password.")
+		else:
+			LOGGER.log("Failed authentication of " + devices[id].to_name_string() + " " + devices[id].to_id_string())
+			print("Authentication failure: Bad password.")
 	except KeyboardInterrupt:
 		print("\nAuthentication failure: Exited by user.")
 
@@ -230,8 +232,11 @@ def deauthenticate(id):
 			devices[id].deauthenticate()
 			devices[id].update_whitelist(False)
 			dm.dump_database_file()
+			LOGGER.log("Deauthentication of " + devices[id].to_name_string() + " " + devices[id].to_id_string())
 			print("Device successfully deauthenticated.")
-		else: print("Device remains authenticated.")
+		else:
+			LOGGER.log("Failed deauthentication of " + devices[id].to_name_string() + " " + devices[id].to_id_string())
+			print("Device remains authenticated.")
 	except KeyboardInterrupt:
 		print("\nDeauthentication failure: Exited by user.")
 
@@ -244,7 +249,7 @@ def update_password():
 		new_password = prompt_for_new_password()
 		if new_password is not None:
 			from password_manager import PasswordManager
-			PasswordManager(None).update_password_hash(new_password)
+			PasswordManager(LOGGER).update_password_hash(new_password)
 			print("Password successfully updated.")
 		else: print("Password updation failure: Passwords didn't match.")
 	except KeyboardInterrupt:
@@ -281,6 +286,7 @@ def whitelist(id):
 			else: devices[id].update_whitelist(True, timespan=timespan, unit=unit_code)
 			dm.dump_database_file()
 
+			LOGGER.log("Whitelisting of " + devices[id].to_name_string() + " " + devices[id].to_id_string() + " untill " + devices[id].get_timeout_date_str())
 			print("Device successfully whitelisted untill", devices[id].get_timeout_date_str() + ".")
 
 	except KeyboardInterrupt:
@@ -305,6 +311,10 @@ def list_connected_devices():
 #
 # Script starts here
 #
+
+# Initialize logger
+from logger import Logger
+LOGGER = Logger(True)
 
 # Parse arguments passed from the CLI
 args = parse_args()

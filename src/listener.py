@@ -31,7 +31,7 @@ class Listener:
 	def __init__(self, quiet):
 		global LOGGER, MANAGER
 		LOGGER = Logger(quiet)
-		MANAGER = DeviceManager()
+		MANAGER = DeviceManager(logger=LOGGER)
 
 	# Starts listening for USB connections
 	def listen(self):
@@ -50,11 +50,7 @@ class Listener:
 				connection_thread.start()
 		except KeyboardInterrupt:
 			LOGGER.log("Exited by user!")
-			from os import remove
-			try:
-				remove(Paths.PID_FILE)
-			except FileNotFoundError:
-				pass
+			Paths.delete_tmp_dir()
 			exit()
 
 	# Sends a USB device to authentication if necessary

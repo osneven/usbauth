@@ -27,10 +27,39 @@ class Logger:
 
 	# Initializes an empty log file
 	def __init__(self, quiet):
-		Paths.create_paths()
-		self.LOG_FILE = Paths.LOG_DIR + self.generate_log_name()
-		open(self.LOG_FILE, "wb").close() # Initialize empty file
+		from os.path import isfile
+
+		# Get a name for the log file
+		log_file = self.load_log_filename()
+		if log_file is None: # If no name is stored on the disk, generate a new one.
+			log_file = Paths.LOG_DIR + self.generate_log_name()
+
+		# Ensure that log file exists
+		if not isfile(log_file):
+			Paths.create_paths()
+			open(log_file, "wb").close() # Initialize empty file
+
+		self.LOG_FILE = log_file
+		self.dump_log_filename()
 		self.QUIET = quiet
+
+	# Checks if there is a log filename stored on the disk
+	def load_log_filename(self):
+		Paths.create_paths()
+		try:
+			with open(Paths.LOG_PATHNAME_FILE, "rb") as f:
+				log_file = f.read().decode("UTF-8")
+				f.close()
+				return log_file
+		except FileNotFoundError:
+			return None
+
+	# Dumps the log filename to the disk
+	def dump_log_filename(self):
+		Paths.create_paths()
+		with open(Paths.LOG_PATHNAME_FILE, "wb") as f:
+			f.write(self.LOG_FILE.encode("UTF-8"))
+			f.close()
 
 	# Logs a message to stdout and the log file
 	def log(self, message):

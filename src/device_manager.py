@@ -24,8 +24,9 @@ from paths import Paths
 #	password verification for USB device authentication, and
 #	storing data about all USB devices it handles.
 class DeviceManager:
-	def __init__(self):
+	def __init__(self, logger=None):
 		self.load_database_file()
+		self.LOGGER = logger
 
 	# Add a device to the database and deauthenticates it
 	def add_device(self, device):
@@ -45,7 +46,9 @@ class DeviceManager:
 				break
 
 		# Deauthenticate the device if it's not whitelisted
-		if device.is_whitelisted(): device.authenticate()
+		if device.is_whitelisted():
+			if self.LOGGER is not None: self.LOGGER.log("Authentication by whitelist on " + device.to_name_string() + " " + device.to_id_string())
+			device.authenticate()
 		else: device.deauthenticate()
 
 		# Add the device
