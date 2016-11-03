@@ -25,7 +25,7 @@ from paths import Paths
 class Device:
 
 	# Initializes the USB device using the root of its path and gathers information about it, and saves it all as bytes like objects
-	def __init__(self, device_path):
+	def __init__(self, device_path, read_information=True):
 		self.VENDOR = None
 		self.VENDOR_ID = None
 		self.PRODUCT	= None
@@ -36,8 +36,9 @@ class Device:
 		self.TIMEOUT_DATE = None
 		self.PATH = device_path
 		self.CONNECTED = True
-		self.read_device_information()
-		self.generate_device_hash()
+		if read_information:
+			self.read_device_information()
+			self.generate_device_hash()
 
 	# Reads the following information about the device and stores it in variables:
 	#	vendor name, vendor id, product name, product id and serial
@@ -138,6 +139,9 @@ class Device:
 			return self.TIMEOUT_DATE > datetime.now()
 		# No timeout date, just return the value
 		return self.WHITELISTED
+
+	def get_timeout_date(self):
+		return self.TIMEOUT_DATE
 
 	def get_timeout_date_str(self):
 		if self.WHITELISTED:
