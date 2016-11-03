@@ -99,12 +99,3 @@ class PasswordHandler:
 			return True
 		except InvalidKey:
 			return False
-
-# This class is used for encrypting and decrypting the database file
-class DatabaseHandler:
-
-	def encrypt_bytes(self, bytes_to_encrypt):
-		pass
-
-	def decrypt_bytes(self, bytes_to_decrypt):
-		pass

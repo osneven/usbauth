@@ -28,7 +28,7 @@ class Paths:
 	CONFIG_DIR			= INSTALL_DIR + "config/"		# Directory where the program files that are not source files are located.
 	SALT_FILE			= CONFIG_DIR + "salt"			# File containing the salt for the password.
 	PASSWORD_FILE		= CONFIG_DIR + "passwd"			# File containing the encrypted password.
-	DATABASE_FILE		= CONFIG_DIR + "database.db"	# AES256 encrypted pickle file.
+	DATABASE_FILE		= CONFIG_DIR + "database.db"	# AES256 encrypted sqlcipher database file.
 	PID_FILE			= TMP_DIR + "pid"				# File containing the PID of the running process, if any.
 	LOG_PATHNAME_FILE	= TMP_DIR + "logfile_name"		# File containing the log's file name of the running process, if any.
 	LOG_DIR 			= VAR_DIR + "logs/"				# Directory where logs are stored.
