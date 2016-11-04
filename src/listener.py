@@ -62,8 +62,10 @@ class Listener:
 		insertion = self.connection_type(dev)
 
 		# Check if the connection was an insertion or removal
+		MANAGER.DATABASE.open(None)
 		if insertion: self.insertion(path)
 		else: self.removal(path)
+		MANAGER.DATABASE.close()
 
 	# Handles post insertion of a device path
 	def insertion(self, path):
@@ -78,7 +80,6 @@ class Listener:
 		if not device is None:
 			device_name_if_found =  "of " + device.to_name_string() + " " + device.to_id_string() + " "
 			MANAGER.remove_device(device)
-			MANAGER.dump_database_file()
 		else: LOGGER.log("Unable to locate the removed device in the database.")
 		LOGGER.log("Removal " + device_name_if_found + "at " + path)
 

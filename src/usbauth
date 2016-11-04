@@ -65,9 +65,9 @@ def read_pid_file():
 	try:
 		Paths.create_paths()
 		with open(Paths.PID_FILE, "rb") as f:
-				PID = int(f.read().decode("UTF-8"))
-				f.close()
-				return PID
+			PID = int(f.read().decode("UTF-8"))
+			f.close()
+			return PID
 	except:
 		return None
 
@@ -201,7 +201,6 @@ def authenticate(id):
 		print("Authentication undergoing on:\n" + devices[id].get_description())
 		if prompt_and_verify_password():
 			devices[id].authenticate()
-			dm.dump_database_file()
 			LOGGER.log("Authentication of " + devices[id].to_name_string() + " " + devices[id].to_id_string())
 			print("Device successfully authenticated.")
 		else:
@@ -231,7 +230,6 @@ def deauthenticate(id):
 		if prompt_yes_or_no("Do you wish to deauthenticate this device?"):
 			devices[id].deauthenticate()
 			devices[id].update_whitelist(False)
-			dm.dump_database_file()
 			LOGGER.log("Deauthentication of " + devices[id].to_name_string() + " " + devices[id].to_id_string())
 			print("Device successfully deauthenticated.")
 		else:
@@ -284,7 +282,6 @@ def whitelist(id):
 			# Update the whitlisting state
 			if timespan is 0: devices[id].update_whitelist(True)
 			else: devices[id].update_whitelist(True, timespan=timespan, unit=unit_code)
-			dm.dump_database_file()
 
 			LOGGER.log("Whitelisting of " + devices[id].to_name_string() + " " + devices[id].to_id_string() + " untill " + devices[id].get_timeout_date_str())
 			print("Device successfully whitelisted untill", devices[id].get_timeout_date_str() + ".")

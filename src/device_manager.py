@@ -19,33 +19,35 @@ For any further information contact me at oliver@neven.dk
 '''
 import pickle
 from paths import Paths
-from database import USBDatabse
+from database import USBDatabase
 
 # A class used for handling:
 #	password verification for USB device authentication, and
 #	storing data about all USB devices it handles.
 class DeviceManager:
 	def __init__(self, logger=None):
-		self.DATABASE = USBDatabase()
+		self.DATABASE = USBDatabase(logger)
 		self.LOGGER = logger
 
 	# Add a device to the database and deauthenticates it
 	def add_device(self, device):
-		pass
+		self.DATABASE.insertion_of_device(device)
 
 	# States a device as not connected, leaves it in the DEVICES list
 	# NOTE: This also sets the device's PATH to "Removed"
 	def remove_device(self, device):
-		pass
+		self.DATABASE.removal_of_device(device)
 
 	# Returns the device that has a specific path
 	def get_device_by_path(self, path):
-		match = self.DATABASE.select_devices(self.DATABASE.ColumnNames.PATH, path)
+		match = self.DATABASE.select_devices(self.DATABASE.ColumnNames.PATH.value, path)
 		if len(match) > 0: return self.DATABASE.list_to_device(match[0])
 
 	# Returns a list of all the connected devices
 	def list_connected_devices(self):
-		connected_devices = []
-		for device in self.DEVICES:
-			if device.is_connected(): connected_devices.append(device)
-		return connected_devices
+		matches = self.DATABASE.select_devices(self.DATABASE.ColumnNames.CONNECTED.value, True)
+		if matches is not None and len(matches) > 0:
+			devices = []
+			[devices.append(self.DATABASE.list_to_device(row)) for row in matches]
+			return devices
+		else: return None

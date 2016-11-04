@@ -1,6 +1,6 @@
 '''
 USBAuth, a USB device authentication tool.
-Copyright (C) 2016  Oliver Stochholm Neven
+Copyright (C) 2016  importer Stochholm Neven
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -18,7 +18,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 For any further information contact me at oliver@neven.dk
 '''
 from device import Device
-from pysqlcipher import dbapi2 as lite
+#from pysqlcipher import dbapi2 as lite
+import sqlite3 as lite
 from paths import Paths
 from enum import Enum
 
@@ -29,8 +30,9 @@ from enum import Enum
 
 class USBDatabase:
 
-	def __init__(self):
+	def __init__(self, logger):
 		self.OPEN = False
+		self.LOGGER = logger
 		self.TABLE_NAME = "Devices"
 
 ################################################################################
@@ -40,21 +42,25 @@ class USBDatabase:
 		if self.OPEN: return
 		self.CONN = lite.connect(Paths.DATABASE_FILE, detect_types=lite.PARSE_DECLTYPES)
 		self.CUR = self.CONN.cursor()
-		self.CUR.execute('PRAGMA key="{}"'.format(cleartext_password))
-		self.CUR.execute('PRAGMA kdf_iter=100000')
+		#self.CUR.execute('PRAGMA key="{}"'.format(cleartext_password))
+		#self.CUR.execute('PRAGMA kdf_iter=100000')
 		self.OPEN = True
+		self.LOGGER.log("Database connection opened")
 
 	# Closes the database connection
 	def close(self):
 		if not self.OPEN: return
+		self.commit()
 		self.CUR.close()
-		self.CONN.commit()
 		self.CONN.close()
 		self.OPEN = False
+		self.LOGGER.log("Database connection closed")
+
 
 	# Commits the database connection
 	def commit(self):
 		self.CONN.commit()
+		self.LOGGER.log("Database connection commited")
 
 ################################################################################
 
@@ -64,14 +70,14 @@ class USBDatabase:
 		self.ensure_table_exists()
 
 		# Chek if the device is already stored in the database, there should not be any more than one
-		match = self.select_devices(ColumnNames.HASH, device.get_hash())
+		match = self.select_devices(self.ColumnNames.HASH.value, device.get_hash())
 		if match is not None and len(match) > 0: # There is a match
 
 			# Merge the matched devices information into the new device and delete the match
 			match = match[0]
-			match_device = self.list_to_de	vice(match)
+			match_device = self.list_to_device(match)
 			device = self.merge_old_and_new_device(device, match_device)
-			self.delete_devices(ColumnNames.ID, "'" + match[0] + "'")
+			self.delete_devices(self.ColumnNames.ID.value, "'" + match[0] + "'")
 
 		# Deauthenticate the device if it is not whitelisted
 		if device.is_whitelisted(): device.authenticate()
@@ -88,10 +94,8 @@ class USBDatabase:
 		self.ensure_table_exists()
 
 		# Check if the device is stored in the database, there should not be any more than one
-		match = self.select_devices(ColumnNames.HASH, device.get_hash())
-		if match is not None and len(match) > 0: # There is a match
-			match[0].set_connected(False) 		 # Simply set its connected state to "False"
-			self.commit()
+		self.update_devices(self.ColumnNames.HASH.value, device.get_hash(), [self.ColumnNames.CONNECTED.value, self.ColumnNames.PATH.value], [False, "Removed"])
+		self.commit()
 
 ################################################################################
 
@@ -157,7 +161,7 @@ class USBDatabase:
 	def ensure_table_exists(self):
 		if not self.OPEN: return
 		columns = "\
-		{} 	INT 	AUTOINCREMENT,\
+		{} 	INT 	PRIMARY KEY,\
 		{}	TEXT	NOT NULL,\
 		{}	TEXT	NOT NULL,\
 		{}	TEXT	NOT NULL,\
@@ -167,24 +171,24 @@ class USBDatabase:
 		{}	TEXT	NOT NULL,\
 		{}	BOLLEAN	NOT NULL,\
 		{}	BOOLEAN	NOT NULL,\
-		{}	TIMESTAMP,\
-		".format(ColumnNames.ID,
-			ColumnNames.VENDOR,
-			ColumnNames.VENDOR_ID,
-			ColumnNames.PRODUCT,
-			ColumnNames.PRODUCT_ID,
-			ColumnNames.SERIAL,
-			ColumnNames.HASH,
-			ColumnNames.PATH,
-			ColumnNames.CONNECTED,
-			ColumnNames.WHITELISTED,
-			ColumnNames.TIMEOUT_DATE)
+		{}	TIMESTAMP".format(self.ColumnNames.ID.value,
+			self.ColumnNames.VENDOR.value,
+			self.ColumnNames.VENDOR_ID.value,
+			self.ColumnNames.PRODUCT.value,
+			self.ColumnNames.PRODUCT_ID.value,
+			self.ColumnNames.SERIAL.value,
+			self.ColumnNames.HASH.value,
+			self.ColumnNames.PATH.value,
+			self.ColumnNames.CONNECTED.value,
+			self.ColumnNames.WHITELISTED.value,
+			self.ColumnNames.TIMEOUT_DATE.value)
 		self.CUR.execute("CREATE TABLE IF NOT EXISTS {} ({})".format(self.TABLE_NAME, columns))
 
 	# Returns a list of rows from the table "Devices" which all contains the provided value in the provided column
 	def select_devices(self, column_name, column_value):
 		if not self.OPEN: return None
-		self.CUR.execute("SELECT * FROM ? WHERE ? MATCH '?'", (self.TABLE_NAME, column_name, column_value))
+		print(column_name + " = " + str(column_value))
+		self.CUR.execute("SELECT * FROM ? WHERE ? MATCH ?", (self.TABLE_NAME, column_name, column_value))
 		return self.CUR.fetchall()
 
 	# Deletes a row from the table "Devices" which contains the provided value in the provided column
@@ -197,13 +201,17 @@ class USBDatabase:
 	# This does not commit!
 	def insert_device(self, column_values):
 		if not self.OPEN: return
-		self.CUR.execute("INSERT INTO ? VALUES (?)", (self.TABLE_NAME, column_values))
+		self.CUR.execute("INSERT INTO ? VALUES (?)", (self.TABLE_NAME, ["NULL"] + column_values))
 
 	# Updates a device which has the provided match value in the provided match column, with the new provided insert values in the provided insert columns
+	# But, if a device is given, it will just use that.
 	# This does not commit!
-	def update_device(self, match_column_name, match_column_values, insert_column_names, insert_column_values):
+	def update_devices(self, match_column_name, match_column_value, insert_column_names, insert_column_values, device=None):
 		if not self.OPEN or len(insert_column_names) == len(insert_column_values): return
+		if not device is None:
+			insert_column_names = list(device.__dict__.keys())
+			insert_column_values = list(device.__dict__.values())
 		s = []
 		[s.append("{} = '{}', ".format(c, insert_column_values[i])) for i,c in enumerate(insert_column_names)]
 		s = "".join(s)[:-2]
-		self.CUR.execute("UPDATE ? SET ? WHERE ? = '?'")
+		self.CUR.execute("UPDATE ? SET ? WHERE ? = ?", (self.TABLE_NAME, s, match_column_name, match_column_values))
