@@ -70,7 +70,6 @@ class Listener:
 		device = Device(path)
 		LOGGER.log("Insertion of " + device.to_name_string() + " " + device.to_id_string() + " at " + path)
 		MANAGER.add_device(device)
-		MANAGER.dump_database_file()
 
 	# Handles post removal of a device path
 	def removal(self, path):
